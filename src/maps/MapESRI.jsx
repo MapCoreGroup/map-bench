@@ -276,7 +276,7 @@ const MapESRI = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
 
     // Create the map - using 'hybrid' basemap for better brightness with labels
     const map = new Map({
-      basemap: 'hybrid',
+      basemap: 'satellite',
       ground: 'world-elevation',
       layers: [google3DTilesLayer.current]
     })
