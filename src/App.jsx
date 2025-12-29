@@ -15,7 +15,7 @@ const MapCesium = lazy(() => import('./maps/MapCesium'))
 const MapLoader = () => null
 
 function App() {
-  const [mapType, setMapType] = useState('mapbox') // 'mapbox', 'esri', or 'cesium'
+  const [mapType, setMapType] = useState('maplibre') // 'mapbox', 'esri', or 'cesium'
   const [viewMode, setViewMode] = useState('2d') // '2d' or '3d'
   const [currentLocation, setCurrentLocation] = useState({ continent: 'northAmerica', city: 'newYork' })
   const [expandedContinent, setExpandedContinent] = useState('northAmerica')

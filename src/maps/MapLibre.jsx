@@ -171,7 +171,8 @@ const MapLibre = forwardRef(({ currentLocation, viewMode = '3d', isActive = true
       pitch: pitch,
       bearing: bearing,
       antialias: true,
-      maxPitch: 85
+      maxPitch: 85,
+      attributionControl: false
     })
 
     map.current.on('load', async () => {

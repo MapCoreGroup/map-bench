@@ -13,8 +13,8 @@ export function MapToggle({ mapType, onToggle }) {
   }, [])
 
   const MAP_OPTIONS = [
-    { id: 'mapbox', label: 'Mapbox', icon: '🗺️', color: 'linear-gradient(135deg, #4264fb 0%, #1d4ed8 100%)' },
     { id: 'maplibre', label: 'MapLibre', icon: '🗾', color: 'linear-gradient(135deg, #1e88e5 0%, #1565c0 100%)' },
+    { id: 'mapbox', label: 'Mapbox', icon: '🗺️', color: 'linear-gradient(135deg, #4264fb 0%, #1d4ed8 100%)' },
     { id: 'esri', label: 'ESRI', icon: '🌐', color: 'linear-gradient(135deg, #0079c1 0%, #005a8c 100%)' },
     { id: 'cesium', label: 'Cesium', icon: '🌍', color: 'linear-gradient(135deg, #6db33f 0%, #4a8c2a 100%)' }
   ]

@@ -172,7 +172,8 @@ const MapBox = forwardRef(({ currentLocation, viewMode = '3d', isActive = true, 
       pitch: pitch,
       bearing: bearing,
       antialias: true,
-      maxPitch: 85
+      maxPitch: 85,
+      attributionControl: false
     })
 
     // Hide basemap labels IMMEDIATELY when style loads (before tiles render)
