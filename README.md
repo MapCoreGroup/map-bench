@@ -16,6 +16,7 @@ Map Bench allows you to compare the performance and rendering quality of four ma
 | **MapLibre GL** | Open-source fork of Mapbox GL JS |
 | **ArcGIS (ESRI)** | Enterprise-grade 3D SceneView with IntegratedMesh3DTilesLayer |
 | **CesiumJS** | High-precision 3D globe for geospatial visualization |
+| **Leaflet** | Lightweight open-source JavaScript library for mobile-friendly interactive maps |
 
 > Want to add another map provider? Check out our [guide on adding new map components](src/maps/README.md).
 

@@ -10,6 +10,7 @@ const MapBox = lazy(() => import('./maps/MapBox'))
 const MapLibre = lazy(() => import('./maps/MapLibre'))
 const MapESRI = lazy(() => import('./maps/MapESRI'))
 const MapCesium = lazy(() => import('./maps/MapCesium'))
+const MapLeaflet = lazy(() => import('./maps/MapLeaflet'))
 
 // Empty loading fallback - maps load fast enough
 const MapLoader = () => null
@@ -37,6 +38,7 @@ function App() {
   const maplibreRef = useRef(null)
   const esriRef = useRef(null)
   const cesiumRef = useRef(null)
+  const leafletRef = useRef(null)
 
   const handleLocationChange = useCallback((continentKey, cityKey) => {
     setCurrentLocation({ continent: continentKey, city: cityKey })
@@ -59,6 +61,10 @@ function App() {
     setTilesLoaded(count)
   }, [])
 
+  const handleTileLoadLeaflet = useCallback((count) => {
+    setTilesLoaded(prev => prev + count)
+  }, [])
+
   const handleMapTypeChange = useCallback((newType) => {
     // Get camera from current map type and save it to shared ref
     let camera = null
@@ -70,6 +76,8 @@ function App() {
       camera = esriRef.current.getCamera()
     } else if (mapType === 'cesium' && cesiumRef.current) {
       camera = cesiumRef.current.getCamera()
+    } else if (mapType === 'leaflet' && leafletRef.current) {
+      camera = leafletRef.current.getCamera()
     }
 
     // Save camera to shared ref (immediately available for new map)
@@ -157,6 +165,18 @@ function App() {
               viewMode={viewMode}
               isActive={true}
               onTileLoad={handleTileLoadCesium}
+              layers={layers}
+              initialCamera={getInitialCamera()}
+            />
+          )}
+
+          {mapType === 'leaflet' && (
+            <MapLeaflet 
+              ref={leafletRef}
+              currentLocation={currentLocation}
+              viewMode={viewMode}
+              isActive={true}
+              onTileLoad={handleTileLoadLeaflet}
               layers={layers}
               initialCamera={getInitialCamera()}
             />

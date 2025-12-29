@@ -17,6 +17,8 @@
     "@loaders.gl/core": "^4.3.4",
     "@loaders.gl/gltf": "^4.3.4",
     "cesium": "^1.129.0",
+    "leaflet": "^1.9.4",
+    "leaflet-canvas-markers": "^1.0.7",
     "mapbox-gl": "^3.8.0",
     "maplibre-gl": "^4.7.1",
     "react": "^18.3.1",

@@ -326,9 +326,8 @@ const MapESRI = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
           quality: 'high'
         },
         lighting: {
-          type: 'sun',
-          date: new Date('2024-06-21T12:00:00Z'),
-          directShadowsEnabled: false
+          type: 'virtual', // Light follows camera, always bright
+          directShadowsEnabled: true
         }
       },
       ui: {

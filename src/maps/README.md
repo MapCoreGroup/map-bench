@@ -87,7 +87,56 @@ const MapNew = forwardRef(({ onTileLoad, initialCamera, viewMode, layers }, ref)
 export default MapNew
 ```
 
-### 3. Integrate into `App.jsx`
+### 3. Support Location Changes (FlyTo)
+To support navigating to specific locations (e.g., when a user selects a city), you need to:
+1. Expose a `flyTo` method in `useImperativeHandle`.
+2. Listen for changes in the `currentLocation` prop.
+
+```jsx
+import { CONTINENTS } from '../components/LocationSelector'
+
+// ... inside component
+useImperativeHandle(ref, () => ({
+  // ... getCamera ...
+  flyTo: (continentKey, cityKey) => {
+    const continent = CONTINENTS[continentKey]
+    if (!continent) return
+    const location = continent.locations[cityKey]
+    
+    // Implement map-specific fly/pan logic here
+    // e.g., map.flyTo([location.coords[0], location.coords[1]])
+  }
+}))
+
+// Handle prop-based location changes
+useEffect(() => {
+  if (!mapInstance.current || !currentLocation) return
+  
+  // Logic to fly to the new location
+  // ...
+}, [currentLocation])
+```
+
+### 4. Support System Layers
+The system passes a `layers` prop containing the visibility state of layers (e.g., `power-lines`, `religious-buildings`).
+1. Load the layer data (GeoJSON) when the map initializes.
+2. Toggle visibility based on the `layers` prop.
+
+```jsx
+// Handle Layer Visibility
+useEffect(() => {
+  if (!mapInstance.current) return
+
+  // Example for Power Lines layer
+  if (layers['power-lines']?.visible) {
+    // Add layer to map if not present
+  } else {
+    // Remove layer from map if present
+  }
+}, [layers])
+```
+
+### 5. Integrate into `App.jsx`
 1.  **Import**: Add a lazy import for your new component.
     ```jsx
     const MapNew = lazy(() => import('./maps/MapNew'))
@@ -117,5 +166,5 @@ export default MapNew
     )}
     ```
 
-### 4. Update `MapToggle.jsx`
+### 6. Update `MapToggle.jsx`
 Add a button to the `MapToggle` component to allow users to switch to your new map type.
