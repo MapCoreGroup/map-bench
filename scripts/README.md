@@ -1,17 +1,17 @@
-# סקריפטים (Scripts)
+# Scripts (Scripts)
 
-תיקייה זו מכילה סקריפטים של Node.js המשמשים לתחזוקה, איסוף ועיבוד נתונים עבור הפרויקט. סקריפטים אלו אינם חלק מהאפליקציה הרצה בדפדפן, אלא מורצים באופן מקומי בזמן הפיתוח.
+This directory contains Node.js scripts used for maintenance, data collection, and processing for the project. These scripts are not part of the application running in the browser, but are run locally during development.
 
-## קבצים
+## Files
 
 ### `fetch-power-lines.js`
-סקריפט להורדת נתוני קווי מתח.
-- מתחבר ל-API חיצוני (כגון Overpass API של OpenStreetMap).
-- מוריד נתונים על קווי מתח באזור מוגדר.
-- שומר את התוצאה כקובץ GeoJSON בתיקיית `public/data/power-lines.geojson`.
+Script for downloading power line data.
+- Connects to an external API (such as OpenStreetMap's Overpass API).
+- Downloads data on power lines in a defined area.
+- Saves the result as a GeoJSON file in the `public/data/power-lines.geojson` directory.
 
 ### `fetch-religious-buildings.js`
-סקריפט להורדת נתוני מבני דת.
-- מתחבר ל-API חיצוני.
-- מסנן מבני דת לפי סוגים (בתי כנסת, מסגדים, כנסיות וכו').
-- שומר את התוצאה כקובץ GeoJSON בתיקיית `public/data/religious-buildings.geojson`.
+Script for downloading religious buildings data.
+- Connects to an external API.
+- Filters religious buildings by type (synagogues, mosques, churches, etc.).
+- Saves the result as a GeoJSON file in the `public/data/religious-buildings.geojson` directory.

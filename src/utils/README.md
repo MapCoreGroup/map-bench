@@ -1,16 +1,16 @@
-# כלי עזר (Utilities)
+# Utilities (Utilities)
 
-תיקייה זו מכילה פונקציות עזר, קבועים וקונפיגורציות המשמשים את האפליקציה.
+This directory contains helper functions, constants, and configurations used by the application.
 
-## קבצים
+## Files
 
 ### `mapStyleConfig.js`
-קובץ קונפיגורציה לסגנון המפה.
-- מגדיר את מקורות המידע (Sources) - כגון GeoJSON או Tiles.
-- מגדיר את השכבות (Layers) - כיצד המידע יוצג (צבעים, עובי קו, אייקונים).
-- משמש כבסיס לטעינת המפה ב-MapLibre/Mapbox.
+Configuration file for map style.
+- Defines data sources (Sources) - such as GeoJSON or Tiles.
+- Defines layers (Layers) - how the information will be displayed (colors, line width, icons).
+- Serves as a base for loading the map in MapLibre/Mapbox.
 
 ### `esriStyleConverter.js`
-כלי להמרת סגנונות.
-- פונקציות המרה בין פורמטים שונים של הגדרות סגנון (למשל, המרה מסגנון של ESRI לסגנון של Mapbox/MapLibre או להיפך).
-- עוזר בשמירה על אחידות ויזואלית בין סוגי המפות השונים.
+Style conversion tool.
+- Conversion functions between different style definition formats (e.g., converting from ESRI style to Mapbox/MapLibre style or vice versa).
+- Helps maintain visual consistency between different map types.

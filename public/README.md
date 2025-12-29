@@ -1,20 +1,20 @@
-# תיקיית נכסים ציבוריים (Public)
+# Public Assets Directory (Public)
 
-תיקייה זו מכילה קבצים סטטיים המוגשים ישירות על ידי השרת (Vite) ללא עיבוד נוסף. הקבצים כאן נגישים בכתובת השורש של האפליקציה.
+This directory contains static files served directly by the server (Vite) without further processing. The files here are accessible at the root address of the application.
 
-## קבצים ותיקיות
+## Files and Directories
 
 ### `data/`
-מכילה קבצי נתונים גיאוגרפיים (GeoJSON) המשמשים כשכבות במפה.
+Contains geographic data files (GeoJSON) used as layers in the map.
 
 ### `sprites/`
-מכילה אייקונים וגרפיקה וקטורית (SVG) המשמשים לסימון נקודות עניין במפה.
+Contains icons and vector graphics (SVG) used for marking points of interest on the map.
 
 ### `map-style.json`
-קובץ הגדרת סגנון המפה (Map Style Specification).
-- מגדיר את המראה הכללי של המפה.
-- מפנה למקורות מידע (Tiles, GeoJSON).
-- מגדיר שכבות בסיס (כבישים, רקע, מים).
+Map Style Specification file.
+- Defines the general look of the map.
+- References data sources (Tiles, GeoJSON).
+- Defines base layers (roads, background, water).
 
 ### `favicon.svg`
-אייקון האפליקציה המוצג בלשונית הדפדפן.
+Application icon displayed in the browser tab.

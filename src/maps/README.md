@@ -1,28 +1,121 @@
-# רכיבי מפה (Maps)
+# Map Components (Maps)
 
-תיקייה זו מכילה את המעטפת (Wrappers) לספריות המיפוי השונות. כל רכיב כאן אחראי על אתחול וניהול מופע של מפה מסוג מסוים.
+This directory contains wrappers for the various mapping libraries. Each component here is responsible for initializing and managing an instance of a specific map type.
 
-## רשימת מפות
+## Map List
 
 ### `MapLibre.jsx`
-מימוש מפה באמצעות ספריית **MapLibre GL JS**.
-- מבוסס על WebGL.
-- משמש להצגת מפות וקטוריות.
-- תומך בטעינת סגנונות (Styles) ו-GeoJSON.
-- זוהי בדרך כלל המפה ברירת המחדל.
+Map implementation using **MapLibre GL JS** library.
+- WebGL based.
+- Used for displaying vector maps.
+- Supports loading Styles and GeoJSON.
+- This is usually the default map.
 
 ### `MapCesium.jsx`
-מימוש מפה באמצעות ספריית **CesiumJS**.
-- מנוע גלובוס תלת-ממדי (3D Globe).
-- משמש להצגת פני שטח (Terrain), מבנים תלת-ממדיים ונתונים גיאוגרפיים מורכבים.
-- מתאים להדמיות ריאליסטיות.
+Map implementation using **CesiumJS** library.
+- 3D Globe engine.
+- Used for displaying terrain, 3D buildings, and complex geographic data.
+- Suitable for realistic visualizations.
 
 ### `MapBox.jsx`
-מימוש מפה באמצעות ספריית **Mapbox GL JS**.
-- דומה ל-MapLibre (שהוא Fork שלו), אך משתמש בשירותי Mapbox הקנייניים.
-- דורש בדרך כלל Access Token.
+Map implementation using **Mapbox GL JS** library.
+- Similar to MapLibre (which is a fork of it), but uses proprietary Mapbox services.
+- Usually requires an Access Token.
 
 ### `MapESRI.jsx`
-מימוש מפה באמצעות **ArcGIS API for JavaScript** (של ESRI).
-- משמש לאינטגרציה עם שירותי GIS של ESRI.
-- תומך בשכבות מידע מורכבות ושירותי מפה ארגוניים.
+Map implementation using **ArcGIS API for JavaScript** (by ESRI).
+- Used for integration with ESRI GIS services.
+- Supports complex information layers and enterprise map services.
+## How to Add a New Third-Party Map Component
+
+To add a new map provider (e.g., Google Maps, Leaflet, OpenLayers), follow these steps:
+
+### 1. Create the Component File
+Create a new file in this directory (e.g., `MapGoogle.jsx`).
+
+### 2. Implement the Component Structure
+The component must use `forwardRef` to expose the `getCamera` method to the parent (`App.jsx`). This is crucial for preserving the view when switching between map engines.
+
+```jsx
+import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react'
+
+const MapNew = forwardRef(({ onTileLoad, initialCamera, viewMode, layers }, ref) => {
+  const mapContainer = useRef(null)
+  const mapInstance = useRef(null)
+
+  // Expose getCamera method to parent
+  useImperativeHandle(ref, () => ({
+    getCamera: () => {
+      if (!mapInstance.current) return null
+      // Return object with { center: [lng, lat], zoom, pitch, bearing }
+      return {
+        center: [/* get lng */, /* get lat */],
+        zoom: /* get zoom */,
+        pitch: /* get pitch */,
+        bearing: /* get bearing */
+      }
+    }
+  }))
+
+  // Initialize Map
+  useEffect(() => {
+    if (!mapContainer.current) return
+
+    // Initialize your 3rd party map here
+    // Use initialCamera.center, initialCamera.zoom etc. to set start position
+
+    return () => {
+      // Cleanup map instance
+    }
+  }, [])
+
+  // Handle View Mode Changes (2D/3D)
+  useEffect(() => {
+    if (!mapInstance.current) return
+    // Update map pitch/tilt based on viewMode ('2d' or '3d')
+  }, [viewMode])
+
+  // Handle Layer Visibility
+  useEffect(() => {
+    if (!mapInstance.current) return
+    // Toggle layers based on 'layers' prop
+  }, [layers])
+
+  return <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
+})
+
+export default MapNew
+```
+
+### 3. Integrate into `App.jsx`
+1.  **Import**: Add a lazy import for your new component.
+    ```jsx
+    const MapNew = lazy(() => import('./maps/MapNew'))
+    ```
+2.  **State**: Add a ref for the new map.
+    ```jsx
+    const newMapRef = useRef(null)
+    ```
+3.  **Switch Logic**: Update `handleMapTypeChange` to get the camera from your new ref.
+    ```jsx
+    } else if (mapType === 'newMap' && newMapRef.current) {
+      camera = newMapRef.current.getCamera()
+    }
+    ```
+4.  **Render**: Add a condition to render your component.
+    ```jsx
+    {mapType === 'newMap' && (
+      <Suspense fallback={<MapLoader />}>
+        <MapNew
+          ref={newMapRef}
+          initialCamera={getInitialCamera()}
+          onTileLoad={handleTileLoadNew}
+          viewMode={viewMode}
+          layers={layers}
+        />
+      </Suspense>
+    )}
+    ```
+
+### 4. Update `MapToggle.jsx`
+Add a button to the `MapToggle` component to allow users to switch to your new map type.

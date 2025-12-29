@@ -1,34 +1,34 @@
-# תיקיית קוד המקור (Source)
+# Source Code Directory (Source)
 
-תיקייה זו מכילה את כל קוד המקור של אפליקציית המפה.
+This directory contains all the source code for the map application.
 
-## קבצים ראשיים
+## Main Files
 
 ### `main.jsx`
-נקודת הכניסה (Entry Point) של אפליקציית React.
-- מאתחל את ה-DOM.
-- טוען את קובץ העיצוב הגלובלי.
-- מרנדר את רכיב ה-`App`.
+The entry point of the React application.
+- Initializes the DOM.
+- Loads the global style file.
+- Renders the `App` component.
 
 ### `App.jsx`
-הרכיב הראשי של האפליקציה.
-- מנהל את המצב (State) הראשי של האפליקציה.
-- מכיל את הלוגיקה לטעינת המפות השונות.
-- משלב את הרכיבים השונים (סרגל כלים, מפה, בורר מיקום).
+The main component of the application.
+- Manages the main state of the application.
+- Contains the logic for loading different maps.
+- Integrates the various components (toolbar, map, location selector).
 
 ### `index.css`
-קובץ עיצוב גלובלי (CSS).
-- הגדרות Tailwind CSS (אם בשימוש).
-- איפוס עיצובים (Reset).
-- משתני עיצוב גלובליים.
+Global style file (CSS).
+- Tailwind CSS definitions (if used).
+- Style resets.
+- Global style variables.
 
-## תתי-תיקיות
+## Subdirectories
 
 ### `components/`
-מכילה רכיבי UI (ממשק משתמש) לשימוש חוזר, כגון פאנלים, כפתורים ותפריטים.
+Contains reusable UI components, such as panels, buttons, and menus.
 
 ### `maps/`
-מכילה את המימושים השונים של המפות (MapLibre, Cesium, וכו'). כל קובץ כאן מייצג אינטגרציה עם ספריית מפות אחרת.
+Contains the various map implementations (MapLibre, Cesium, etc.). Each file here represents an integration with a different map library.
 
 ### `utils/`
-מכילה פונקציות עזר, קבצי קונפיגורציה ולוגיקה שאינה תלויה ברכיב ספציפי.
+Contains helper functions, configuration files, and logic that is not specific to a component.

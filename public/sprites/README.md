@@ -1,13 +1,13 @@
-# ספרייטים ואייקונים (Sprites)
+# Sprites and Icons (Sprites)
 
-תיקייה זו מכילה קבצי SVG המשמשים כאייקונים על גבי המפה, בעיקר עבור שכבת מבני הדת.
+This directory contains SVG files used as icons on the map, mainly for the religious buildings layer.
 
-## קבצים
+## Files
 
-- **`jewish.svg`**: אייקון לבית כנסת (מגן דוד).
-- **`muslim.svg`**: אייקון למסגד (סהר).
-- **`christian.svg`**: אייקון לכנסייה (צלב).
-- **`buddhist.svg`**: אייקון למקדש בודהיסטי.
-- **`hindu.svg`**: אייקון למקדש הינדי.
-- **`shinto.svg`**: אייקון למקדש שינטו.
-- **`default.svg`**: אייקון ברירת מחדל למבני דת ללא סיווג ספציפי.
+- **`jewish.svg`**: Icon for a synagogue (Star of David).
+- **`muslim.svg`**: Icon for a mosque (Crescent).
+- **`christian.svg`**: Icon for a church (Cross).
+- **`buddhist.svg`**: Icon for a Buddhist temple.
+- **`hindu.svg`**: Icon for a Hindu temple.
+- **`shinto.svg`**: Icon for a Shinto shrine.
+- **`default.svg`**: Default icon for religious buildings without specific classification.

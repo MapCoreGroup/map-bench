@@ -1,32 +1,32 @@
-# רכיבי ממשק משתמש (Components)
+# User Interface Components (Components)
 
-תיקייה זו מכילה את רכיבי ה-UI של האפליקציה. הרכיבים כאן אינם המפות עצמן, אלא הממשק ששולט עליהן או מציג מידע מעליהן.
+This directory contains the UI components of the application. The components here are not the maps themselves, but the interface that controls them or displays information over them.
 
-## רשימת רכיבים
+## Component List
 
 ### `LayersPanel.jsx`
-פאנל ניהול שכבות.
-- מאפשר למשתמש להדליק ולכבות שכבות מידע על המפה (כגון קווי מתח, מבני דת).
-- שולט על שקיפות השכבות.
+Layer management panel.
+- Allows the user to toggle information layers on the map (such as power lines, religious buildings).
+- Controls layer opacity.
 
 ### `LocationSelector.jsx`
-רכיב לבחירת מיקום.
-- מציג רשימה של יבשות וערים.
-- מאפשר מעבר מהיר למיקומים מוגדרים מראש (FlyTo).
-- כולל תצוגה מותאמת למובייל ולדסקטופ.
+Location selection component.
+- Displays a list of continents and cities.
+- Allows quick navigation to predefined locations (FlyTo).
+- Includes mobile and desktop adapted views.
 
 ### `MapToggle.jsx`
-כפתור/מתג להחלפת ספק המפה.
-- מאפשר למשתמש לעבור בין מנועי מפה שונים (למשל: MapLibre לעומת Cesium).
+Button/Switch for changing the map provider.
+- Allows the user to switch between different map engines (e.g., MapLibre vs. Cesium).
 
 ### `StatusBar.jsx`
-שורת סטטוס בתחתית או בפינת המסך.
-- מציגה מידע טכני על התצוגה הנוכחית:
-  - רמת זום (Zoom Level).
-  - קואורדינטות (קו רוחב/אורך).
-  - כיוון (Bearing/Pitch).
+Status bar at the bottom or corner of the screen.
+- Displays technical information about the current view:
+  - Zoom Level.
+  - Coordinates (Latitude/Longitude).
+  - Bearing/Pitch.
 
 ### `ViewModeToggle.jsx`
-כפתור למעבר בין מצבי תצוגה.
-- מעבר בין דו-ממד (2D) לתלת-ממד (3D).
-- משפיע על הטיית המפה (Pitch).
+Button for switching between view modes.
+- Switch between 2D and 3D.
+- Affects map pitch.

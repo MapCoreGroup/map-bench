@@ -1,16 +1,16 @@
-# נתונים גיאוגרפיים (Data)
+# Geographic Data (Data)
 
-תיקייה זו מכילה קבצי GeoJSON סטטיים הנטענים על ידי המפה.
+This directory contains static GeoJSON files loaded by the map.
 
-## קבצים
+## Files
 
 ### `power-lines.geojson`
-נתוני קווי מתח.
-- מכיל ישויות מסוג `LineString`.
-- משמש להצגת רשת החשמל על גבי המפה.
+Power line data.
+- Contains `LineString` type entities.
+- Used to display the power grid on the map.
 
 ### `religious-buildings.geojson`
-נתוני מבני דת.
-- מכיל ישויות מסוג `Point`.
-- כולל מאפיינים (Properties) המגדירים את סוג המבנה (בית כנסת, מסגד, כנסייה וכו').
-- משמש להצגת אייקונים מתאימים על המפה (מתוך תיקיית `sprites`).
+Religious buildings data.
+- Contains `Point` type entities.
+- Includes properties defining the building type (synagogue, mosque, church, etc.).
+- Used to display appropriate icons on the map (from the `sprites` directory).
