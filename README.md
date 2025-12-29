@@ -216,6 +216,7 @@ Contributions are welcome! Feel free to:
 - Suggest new features
 - Add new locations
 - Improve performance
+- **Add new map providers** - See our [guide on adding new map components](src/maps/README.md)
 
 ## 📧 Contact
 
