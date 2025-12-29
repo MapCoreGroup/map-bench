@@ -17,6 +17,8 @@ Map Bench allows you to compare the performance and rendering quality of four ma
 | **ArcGIS (ESRI)** | Enterprise-grade 3D SceneView with IntegratedMesh3DTilesLayer |
 | **CesiumJS** | High-precision 3D globe for geospatial visualization |
 
+> Want to add another map provider? Check out our [guide on adding new map components](src/maps/README.md).
+
 ## ✨ Features
 
 - 🔄 **Seamless Map Switching** - Switch between mapping libraries while preserving camera position
@@ -216,7 +218,6 @@ Contributions are welcome! Feel free to:
 - Suggest new features
 - Add new locations
 - Improve performance
-- **Add new map providers** - See our [guide on adding new map components](src/maps/README.md)
 
 ## 📧 Contact
 
