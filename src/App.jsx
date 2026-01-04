@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, lazy, Suspense, useEffect } from 'react'
+import { useState, useRef, useCallback, lazy, Suspense, Component, useEffect} from 'react'
 import { LocationSelector, CONTINENTS } from './components/LocationSelector'
 import { StatusBar } from './components/StatusBar'
 import { MapToggle } from './components/MapToggle'
@@ -10,11 +10,71 @@ import { flightTracker } from './dynamic-layers/flightTracker'
 const MapBox = lazy(() => import('./maps/MapBox'))
 const MapLibre = lazy(() => import('./maps/MapLibre'))
 const MapESRI = lazy(() => import('./maps/MapESRI'))
+const MapCore = lazy(() => {
+  console.log('Loading MapCore component...')
+  return import('./maps/MapCore').catch(error => {
+    console.error('Failed to load MapCore component:', error)
+    throw error
+  })
+})
+
 const MapCesium = lazy(() => import('./maps/MapCesium'))
 const MapLeaflet = lazy(() => import('./maps/MapLeaflet'))
 
 // Empty loading fallback - maps load fast enough
 const MapLoader = () => null
+
+// Error boundary for map components
+class MapErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Map component error:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          width: '100%',
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#1a1a2e',
+          color: '#fff',
+          flexDirection: 'column',
+          gap: '20px'
+        }}>
+          <h2>Error loading map</h2>
+          <p style={{ color: '#ff6b6b' }}>{this.state.error?.message || 'Unknown error'}</p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{
+              padding: '10px 20px',
+              background: '#4264fb',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
 
 function App() {
   const [mapType, setMapType] = useState('maplibre') // 'mapbox', 'esri', or 'cesium'
@@ -22,6 +82,9 @@ function App() {
   const [currentLocation, setCurrentLocation] = useState({ continent: 'northAmerica', city: 'newYork' })
   const [expandedContinent, setExpandedContinent] = useState('northAmerica')
   const [tilesLoaded, setTilesLoaded] = useState(0)
+  
+  // Track if MapCore has been loaded at least once (persist across switches)
+  const [mapCoreLoaded, setMapCoreLoaded] = useState(false)
   
   // Initialize layers state from LAYERS_CONFIG
   const [layers, setLayers] = useState(() => {
@@ -39,6 +102,7 @@ function App() {
   const maplibreRef = useRef(null)
   const esriRef = useRef(null)
   const cesiumRef = useRef(null)
+  const mapcoreRef = useRef(null)
   const leafletRef = useRef(null)
 
   const handleLocationChange = useCallback((continentKey, cityKey) => {
@@ -62,11 +126,14 @@ function App() {
     setTilesLoaded(count)
   }, [])
 
+  const handleTileLoadMapcore = useCallback((count) => {
+    setTilesLoaded(count)
   const handleTileLoadLeaflet = useCallback((count) => {
     setTilesLoaded(prev => prev + count)
   }, [])
 
   const handleMapTypeChange = useCallback((newType) => {
+    console.log(`Switching map type from ${mapType} to ${newType}`)
     // Get camera from current map type and save it to shared ref
     let camera = null
     if (mapType === 'mapbox' && mapboxRef.current) {
@@ -77,6 +144,8 @@ function App() {
       camera = esriRef.current.getCamera()
     } else if (mapType === 'cesium' && cesiumRef.current) {
       camera = cesiumRef.current.getCamera()
+    } else if (mapType === 'mapcore' && mapcoreRef.current) {
+      camera = mapcoreRef.current.getCamera()
     } else if (mapType === 'leaflet' && leafletRef.current) {
       camera = leafletRef.current.getCamera()
     }
@@ -86,10 +155,15 @@ function App() {
       sharedCameraRef.current = camera
     }
     
+    // Mark MapCore as loaded when switching to it for the first time
+    if (newType === 'mapcore' && !mapCoreLoaded) {
+      setMapCoreLoaded(true)
+    }
+    
     setMapType(newType)
     // Reset tile count when switching
     setTilesLoaded(0)
-  }, [mapType])
+  }, [mapType, mapCoreLoaded])
 
   const handleViewModeChange = useCallback((newMode) => {
     setViewMode(newMode)
@@ -122,7 +196,20 @@ function App() {
     <>
       {/* Map Container - only render active map */}
       <div style={{ width: '100%', height: '100vh' }}>
-        <Suspense fallback={<MapLoader />}>
+        <MapErrorBoundary>
+          <Suspense fallback={<MapLoader />}>
+            {mapType === 'cesium' && (
+            <MapCesium 
+              ref={cesiumRef}
+              currentLocation={currentLocation}
+              viewMode={viewMode}
+              isActive={true}
+              onTileLoad={handleTileLoadCesium}
+              layers={layers}
+              initialCamera={getInitialCamera()}
+            />
+          )}
+          
           {mapType === 'mapbox' && (
             <MapBox 
               ref={mapboxRef}
@@ -158,19 +245,31 @@ function App() {
               initialCamera={getInitialCamera()}
             />
           )}
-          
-          {mapType === 'cesium' && (
-            <MapCesium 
-              ref={cesiumRef}
-              currentLocation={currentLocation}
-              viewMode={viewMode}
-              isActive={true}
-              onTileLoad={handleTileLoadCesium}
-              layers={layers}
-              initialCamera={getInitialCamera()}
-            />
+
+          {/* MapCore - render once loaded, then hide/show instead of unmounting */}
+          {mapCoreLoaded && (
+            <div style={{
+              display: mapType === 'mapcore' ? 'block' : 'none',
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              top: 0,
+              left: 0
+            }}>
+              <MapCore 
+                ref={mapcoreRef}
+                currentLocation={currentLocation}
+                viewMode={viewMode}
+                isActive={mapType === 'mapcore'}
+                onTileLoad={handleTileLoadMapcore}
+                layers={layers}
+                initialCamera={getInitialCamera()}
+              />
+            </div>
           )}
 
+          </Suspense>
+        </MapErrorBoundary>
           {mapType === 'leaflet' && (
             <MapLeaflet 
               ref={leafletRef}

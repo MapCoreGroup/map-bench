@@ -1,20 +1,17 @@
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
+import * as Cesium from 'cesium'
 
 import { CONTINENTS, INITIAL_ZOOM, INITIAL_PITCH, INITIAL_BEARING } from '../components/LocationSelector'
 import { LAYERS_CONFIG } from '../components/LayersPanel'
 import { DEFAULT_RELIGION_ICONS, getIconUrl, loadReligiousBuildings, loadPowerLines } from '../utils/mapStyleConfig'
 
+// In MapCesium.jsx, add at the top after import:
+console.log('Cesium imported:', Cesium)
+console.log('Cesium.Viewer available:', Cesium?.Viewer)
+
 // API Keys - set in .env file
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY
 const CESIUM_TOKEN = import.meta.env.VITE_CESIUM_TOKEN
-
-// Cesium is loaded from CDN (global)
-const Cesium = window.Cesium
-
-// Set Cesium Ion default access token (not used, but required for Cesium to initialize)
-if (Cesium && CESIUM_TOKEN) {
-  Cesium.Ion.defaultAccessToken = CESIUM_TOKEN
-}
 
 // Convert zoom level to camera height (approximate)
 function zoomToHeight(zoom) {
@@ -169,6 +166,11 @@ const MapCesium = forwardRef(({ currentLocation, viewMode = '3d', isActive = tru
     if (viewer.current || viewerInitialized.current) return
     viewerInitialized.current = true
 
+    // Set Cesium Ion default access token (if provided)
+    if (CESIUM_TOKEN && Cesium.Ion) {
+      Cesium.Ion.defaultAccessToken = CESIUM_TOKEN
+    }
+
     // Use initialCamera if provided (when switching from another map), otherwise use location
     let center, range, pitch, heading
     const cameraToUse = initialCameraOnMount.current
@@ -186,8 +188,15 @@ const MapCesium = forwardRef(({ currentLocation, viewMode = '3d', isActive = tru
       heading = INITIAL_BEARING
     }
 
+    // Check if Cesium is available
+    if (!Cesium || !Cesium.Viewer) {
+      console.error('Cesium is not available. Make sure vite-plugin-cesium is configured correctly.')
+      return
+    }
+
     // Create viewer
-    viewer.current = new Cesium.Viewer(mapContainer.current, {
+    try {
+      viewer.current = new Cesium.Viewer(mapContainer.current, {
       baseLayerPicker: false,
       geocoder: false,
       homeButton: false,
@@ -210,10 +219,10 @@ const MapCesium = forwardRef(({ currentLocation, viewMode = '3d', isActive = tru
       )
     })
 
-    // Enable depth testing against terrain
-    viewer.current.scene.globe.depthTestAgainstTerrain = true
-    
-    // Configure mouse controls to match ESRI:
+      // Enable depth testing against terrain
+      viewer.current.scene.globe.depthTestAgainstTerrain = true
+      
+      // Configure mouse controls to match ESRI:
     // - Left button: pan/rotate
     // - Right button: tilt (pitch)
     // - Middle button: zoom
@@ -279,6 +288,11 @@ const MapCesium = forwardRef(({ currentLocation, viewMode = '3d', isActive = tru
     setTimeout(() => {
       applyLayersState().catch(e => console.warn('Error applying layers:', e))
     }, 100)
+
+    } catch (error) {
+      console.error('Error initializing Cesium viewer:', error)
+      return
+    }
 
     console.log('✓ Cesium Viewer ready')
 
@@ -464,6 +478,25 @@ const MapCesium = forwardRef(({ currentLocation, viewMode = '3d', isActive = tru
       viewer.current.scene.requestRender()
     }
   }, [isActive])
+
+  useEffect(() => {
+    // Skip if viewer already exists (React Strict Mode double-render protection)
+    if (viewer.current || viewerInitialized.current) return
+    
+    // Wait a bit if MapCore is loading to avoid conflicts
+    const initDelay = window.MapCore ? 100 : 0
+    
+    setTimeout(() => {
+      viewerInitialized.current = true
+      
+      // Set Cesium Ion default access token (if provided)
+      if (CESIUM_TOKEN && Cesium.Ion) {
+        Cesium.Ion.defaultAccessToken = CESIUM_TOKEN
+      }
+      
+      // ... rest of initialization
+    }, initDelay)
+  }, [])
 
   // Ref to track layers state for use in initialization
   const layersStateRef = useRef(layers)

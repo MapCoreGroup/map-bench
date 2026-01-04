@@ -16,6 +16,7 @@
     "@loaders.gl/3d-tiles": "^4.3.4",
     "@loaders.gl/core": "^4.3.4",
     "@loaders.gl/gltf": "^4.3.4",
+    "@use-gesture/react": "^10.3.1",
     "cesium": "^1.129.0",
     "leaflet": "^1.9.4",
     "leaflet-canvas-markers": "^1.0.7",
