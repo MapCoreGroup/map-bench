@@ -230,6 +230,7 @@ map-bench/
 - **MapLibre GL 4.7** - Open-source WebGL maps
 - **ArcGIS JS SDK 4.34** - ESRI mapping platform
 - **CesiumJS 1.129** - 3D globe visualization
+- **MapCore 4.12.0-MapBench-beta2** - MapCore API version
 
 ### 3D Tiles
 - **deck.gl 9.1** - Large-scale data visualization
