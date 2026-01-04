@@ -86,6 +86,7 @@ The app includes curated locations organized by continent:
    ```env
    VITE_MAPBOX_TOKEN=your_mapbox_token_here
    VITE_GOOGLE_API_KEY=your_google_api_key_here
+   VITE_ESRI_API_KEY=your_esri_api_key_here
    VITE_CESIUM_TOKEN=your_cesium_token_here
    VITE_MAPTILER_KEY=your_maptiler_key_here
    ```
@@ -105,8 +106,28 @@ The app includes curated locations organized by continent:
 |---------|----------|--------------|
 | **Mapbox** | ✅ Yes | [account.mapbox.com](https://account.mapbox.com/access-tokens/) |
 | **Google Maps** | ✅ Yes | [console.cloud.google.com](https://console.cloud.google.com/apis/credentials) |
+| **ESRI ArcGIS** | ✅ Yes | [developers.arcgis.com](https://developers.arcgis.com/documentation/mapping-apis-and-services/security/api-keys/) |
 | **Cesium Ion** | Optional | [cesium.com/ion/tokens](https://cesium.com/ion/tokens) |
 | **MapTiler** | Optional | [maptiler.com/cloud](https://www.maptiler.com/cloud/) |
+
+### ESRI ArcGIS API Setup
+
+To use ESRI ArcGIS basemaps and services, you need to:
+
+1. **Create an ArcGIS Developer Account** (free): [developers.arcgis.com/sign-up](https://developers.arcgis.com/sign-up)
+2. **Create an API Key**:
+   - Go to your [ArcGIS Developer Dashboard](https://developers.arcgis.com/dashboard/)
+   - Navigate to "API Keys" in the left sidebar
+   - Click "Create a new API key"
+   - Give it a name (e.g., "Map Bench")
+   - Set usage limits if desired
+   - Copy the API key
+3. **Add to `.env` file**:
+   ```env
+   VITE_ESRI_API_KEY=your_esri_api_key_here
+   ```
+
+For more details, see the [ESRI API Keys Documentation](https://developers.arcgis.com/documentation/mapping-apis-and-services/security/api-keys/).
 
 ### Google Maps API Setup
 

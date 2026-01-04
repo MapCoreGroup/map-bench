@@ -40,6 +40,13 @@ export const CONTINENTS = {
         quality: 4,
         icon: '🎬'
       },
+      orlando: { 
+        name: 'אורלנדו', 
+        subtitle: 'דירת קצה, מרכז משחקים',
+        coords: [-81.3792, 28.5383],
+        quality: 4,
+        icon: '�'
+      },
     }
   },
   israel: {
