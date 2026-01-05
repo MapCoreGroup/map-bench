@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "NODE_OPTIONS=--max-old-space-size=4096 vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -22,15 +22,16 @@
     "leaflet-canvas-markers": "^1.0.7",
     "mapbox-gl": "^3.8.0",
     "maplibre-gl": "^4.7.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "resium": "^1.19.2"
   },
   "devDependencies": {
+    "@babel/preset-react": "^7.28.5",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.3",
-    "vite": "^6.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11",
     "vite-plugin-cesium": "^1.2.23"
   }
 }

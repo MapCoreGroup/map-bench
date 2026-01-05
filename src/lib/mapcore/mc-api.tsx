@@ -75,10 +75,10 @@ export var editModeEvents     : MapCore.IMcEditMode.ICallback;
 var lastFOV: number = 0;
 var dayMode: boolean = true;
 var defaultCenterPoint: MapCore.SMcVector3D | null = null;
+var defaultAzimuth: number = 0;
 var externalCrsEpsg: number = 0;
 var externalWmtsLayersList: string = "";
 var externalWmtsBaseUrl: string = "";
-
 
 var rendered2D = false;
 var rendered3D = false;
@@ -147,6 +147,20 @@ export class MapCoreHelper {
         return defaultCenterPoint;
     }
 
+    /// Set the initial scale
+    /// @param scale - The scale to set
+    SetInitialScale(scale: number)
+    {
+        initial2DViewScale = scale;
+    }
+
+    /// Set the default azimuth
+    /// @param azimuth - The azimuth to set
+    SetDefaultAzimuth(azimuth: number)
+    {
+        defaultAzimuth = azimuth;
+    }
+
     /// Set the 2D view scale
     /// @param scale - The scale to set
     SetCamera2DViewScale(scale: number)
@@ -207,8 +221,6 @@ export interface Action {
     availableGroups: (groupNames : string[]) => void | null
     group: string | null;
     initialized : boolean;
-    modelPath: string | null;
-    modelFiles: string[] | null;
     availableLayers : (layers : layerNameAndDesc[]) => void | null
     mapStatus : (isDisplayed: boolean) => void | null
     onSelectedObject: (object: MapCore.IMcObject, isEdit: boolean) => void | null;
@@ -219,7 +231,6 @@ export interface Action {
 
 const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups, 
                             group, initialized, 
-                            modelPath, modelFiles,
                             availableLayers, mapStatus, 
                             onSelectedObject, onHeadingChange, 
                             onExternalSourceReady}: Action) => {
@@ -709,6 +720,9 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
                         layer.SetVisibility(false, viewport2D);
                     }
                 });
+                if (initial2DViewScale > 0) {
+                    viewport2D.SetCameraScale(initial2DViewScale);
+                }
             }   
         }
 
@@ -2029,9 +2043,10 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
                 if (defaultCenterPoint) {
                     aViewports[j].terrainCenter = defaultCenterPoint;
                 }
-                else {
-                aViewports[j].terrainCenter = new MapCore.SMcVector3D((aViewports[j].terrainBox.MinVertex.x + aViewports[j].terrainBox.MaxVertex.x) / 2,
-                    (aViewports[j].terrainBox.MinVertex.y + aViewports[j].terrainBox.MaxVertex.y) / 2, 0);
+                else 
+                {
+                    aViewports[j].terrainCenter = new MapCore.SMcVector3D((aViewports[j].terrainBox.MinVertex.x + aViewports[j].terrainBox.MaxVertex.x) / 2,
+                        (aViewports[j].terrainBox.MinVertex.y + aViewports[j].terrainBox.MaxVertex.y) / 2, 0);
                 }
                 aViewports[j].terrainCenter.z = 10000;
             }
@@ -2174,7 +2189,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
         _device.AddRef();
 
         (MapCore as any).__MaxAllowedGeometricError = 75.0;
-        (MapCore as any).__GeoErrorScaleFactor = 0.05;
+        (MapCore as any).__GeoErrorScaleFactor = 0.1;
 
         initCallbacks();
 
@@ -3223,7 +3238,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
 
             {/* { // Modal Yes/No selector for heartbit
               !!isYesNoOpen ?
-                <YesNoModal isOpen={isYesNoOpen} 
+                <YesNoModal isOpen={isYesNoOpen} npm
                             onNo={() => 
                                 {                                    
                                     setIsYesNoOpen(false)

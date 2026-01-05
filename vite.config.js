@@ -8,22 +8,23 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [react(), cesium()],
+  esbuild: {
+    jsx: 'automatic',
+    jsxImportSource: 'react'
+  },
   optimizeDeps: {
     exclude: ['cesium'],
-    // Cesium has many CommonJS dependencies that need to be pre-bundled and converted to ES modules
-    // Add any new CommonJS modules that cause "does not provide an export named 'default'" errors here
     include: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
       'mersenne-twister',
       'urijs',
       'grapheme-splitter',
       'bitmap-sdf',
       'lerc',
       'nosleep.js'
-    ],
-    esbuildOptions: {
-      // Automatically handle CommonJS modules
-      plugins: []
-    }
+    ]
   },
   server: {
     host: true,
@@ -34,7 +35,6 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'require-corp',
     },
     fs: {
-      // Allow serving files from node_modules for ESRI workers
       allow: ['..']
     }
   },
@@ -49,14 +49,28 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     commonjsOptions: {
       include: [
+        /react\/jsx-runtime/,
+        /react\/jsx-dev-runtime/,
+        /react\/index\.js/,
+        /react-dom/,
+        /mapbox-gl/,
+        /maplibre-gl/,
+        /earcut/,
+        /fast-xml-parser/,
+        /long/,
+        /jszip/,
+        /pako/,
+        /snappyjs/,
+        /pbf/,
         /mersenne-twister/,
         /urijs/,
         /grapheme-splitter/,
         /bitmap-sdf/,
         /lerc/,
         /nosleep\.js/,
-        // Match CommonJS modules that Cesium dependencies might use
-        /node_modules\/(mersenne-twister|urijs|grapheme-splitter|bitmap-sdf|lerc|nosleep\.js|@zip\.js)/
+        /@deck\.gl/,
+        /@loaders\.gl/,
+        /node_modules\/(mersenne-twister|urijs|grapheme-splitter|bitmap-sdf|lerc|nosleep\.js|@zip\.js|earcut|fast-xml-parser|long|jszip|pako|snappyjs|pbf|mapbox-gl|maplibre-gl)/
       ],
       transformMixedEsModules: true
     },
@@ -70,7 +84,6 @@ export default defineConfig({
             if (id.includes('@arcgis/core')) {
               return 'arcgis'
             }
-            // Keep deck.gl and loaders.gl together to avoid circular dependency issues
             if (id.includes('@deck.gl') || id.includes('@loaders.gl')) {
               return 'deckgl-loaders'
             }

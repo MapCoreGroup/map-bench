@@ -34,17 +34,45 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
     return 591657550.5 / Math.pow(2, zoom)
   }
 
-  // Convert zoom level to 2D mapcore scale
+  // Convert meters per pixel to zoom level (when 1:1 = 0.25 m/pixel)
+  const metersPerPixelToZoom = (metersPerPixel) => {
+    // Standard web mercator: at zoom 0, ~156,543 m/pixel at equator
+    // Each zoom level halves the meters per pixel
+    // Find zoom where 0.25 m/pixel occurs: 0.25 = 156543 / 2^zoom
+    // 2^zoom = 156543 / 0.25 = 626172
+    // zoom = log2(626172) ≈ 19.26
+    
+    // Calculate zoom: m/pixel = 156543 / 2^zoom
+    // zoom = log2(156543 / m/pixel)
+    return Math.log2(156543 / metersPerPixel);
+  }
+
+  // Convert zoom to meters per pixel
+  const zoomToMetersPerPixel = (zoom) => {
+    return 156543 / Math.pow(2, zoom);
+  }
+
+  // Convert scale factor (relative to 1:1) to zoom
+  // Scale 1 = 0.25 m/pixel (most zoomed in)
+  // Scale 2 = 0.5 m/pixel (2x zoom out)
+  // Scale 4 = 1.0 m/pixel (4x zoom out)
+  const scaleToZoom = (scaleFactor) => {
+    // Scale increases = zoom out = more meters per pixel
+    // metersPerPixel = 0.15 * scaleFactor
+    const metersPerPixel = 0.15 * scaleFactor;
+    return metersPerPixelToZoom(metersPerPixel);
+  }
+
+  // Convert zoom to scale factor (relative to 1:1 = 0.25 m/pixel)
+  // Scale 1 = 0.15 m/pixel (most zoomed in)
+  // Scale 2 = 0.3 m/pixel (2x zoom out)
   const zoomToScale = (zoom) => {
-    return zoom == 30 ? 1 : zoom < 30 ? (30 - zoom) : 1 / (zoom - 30);
+    const metersPerPixel = zoomToMetersPerPixel(zoom);
+    // scaleFactor = metersPerPixel / 0.15
+    return metersPerPixel / 0.15; // Scale factor relative to 1:1
   }
 
-  // Convert 2D mapcore scale to zoom level
-  const scaleToZoom = (scale) => {
-    return scale == 1 ? 30 : scale > 1 ? (30 - scale) : 30 + 1 / scale;
-  }
-
-  const setScale = (scale) => {
+  const setViewportScale = (scale) => {
     if (!mapCoreHelper.current) return
     MapCoreHelper.SetCamera2DViewScale(scale)
   }
@@ -68,7 +96,7 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
       if (viewport) {
         viewport.SetCameraPosition({ x: utmCoords.x, y: utmCoords.y, z: utmCoords.z }, false)
         viewport.SetCameraOrientation(INITIAL_BEARING, viewMode === '3d' ? -90 + INITIAL_PITCH : 0, 0, false)
-        MapCoreHelper.current.SetCamera2DViewScale(zoomToScale(INITIAL_ZOOM));
+        MapCoreHelper.current.SetCamera2DViewScale(zoomToScale(INITIAL_ZOOM)- 6);
       }
     },
     getCamera: () => {
@@ -77,6 +105,10 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
                 aViewports.length > 1 ? aViewports[1]?.viewport : aViewports[0]?.viewport :
                 aViewports[0]?.viewport;
       if (!viewport) return null
+
+      if (!MapCoreHelper.current) {
+        MapCoreHelper.current = new MapCoreHelper(4326, 3857);
+      }
 
       let pYaw = {};
       let pPitch = {};
@@ -87,9 +119,9 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
       position = MapCoreHelper.current.convertToGeo(position);
       return {
         center: [position.x / 100000.0, position.y / 100000.0],
-        zoom: altitudeToZoom(position.z), 
-        pitch: 90 + pPitch.Value,
-        bearing: (90 - pYaw.Value)
+        zoom: currentViewMode.current === '3d' ? altitudeToZoom(position.z) : scaleToZoom(viewport.GetCameraScale()) - 4, 
+        pitch: currentViewMode.current === '3d' ? 90 + pPitch.Value : 0.0,
+        bearing: (pYaw.Value - 180)
       }
     },
     setCamera: (cameraState) => {
@@ -107,7 +139,7 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
       viewport.SetCameraPosition(position, false)
       MapCoreHelper.current.SetCamera2DViewScale(zoomToScale(cameraState.zoom));
       const pitch = currentViewMode.current === '3d' ? cameraState.pitch : -90;
-      viewport.SetCameraOrientation(cameraState.bearing, -90 + pitch, 0, false)
+      viewport.SetCameraOrientation(cameraState.bearing + 90, -90 + pitch, 0, false)
     }
   }), [])
 
@@ -127,19 +159,19 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
         const location = continent.locations[currentLocation.city];
         if (!location) return
         isActiveRef.current = true;
-        
 
         // Convert the default center point to the UTM coordinate system
         let _initialZoom = INITIAL_ZOOM;
+        let _initialScale = 0.0;
         if (viewMode === '2d') {
-          _initialZoom = scaleToZoom(INITIAL_ZOOM);
+          _initialScale = zoomToScale(INITIAL_ZOOM) - 6;
         }
         const utmCenter = mapCoreHelper.current.convertToUtm(
           { x: location.coords[0] * 100000.0, 
             y: location.coords[1] * 100000.0, 
             z: zoomToAltitude(_initialZoom) });
 
-        // Set the initial location
+        mapCoreHelper.current.SetInitialScale(_initialScale);
         mapCoreHelper.current.SetInitialLocation(utmCenter);
 
         // Open the terrain
@@ -237,7 +269,7 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
       const utmLocation = mapCoreHelper.current.convertToUtm(
         { x: location.coords[0] * 100000.0, 
           y: location.coords[1] * 100000.0, 
-          z: zoomToAltitude(_initialZoom) });
+          z: zoomToAltitude(_initialZoom + 4) });
       viewport.SetCameraPosition({ x: utmLocation.x, y: utmLocation.y, z: utmLocation.z }, false)
       viewport.SetCameraOrientation(INITIAL_BEARING, -90 + pitch, 0, false)
       if (viewMode === '2d') {
@@ -250,7 +282,7 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
   useEffect(() => {
     let mode = currentViewMode.current;
     currentViewMode.current = viewMode;
-    if (mode !== viewMode) {
+    if (mode !== viewMode && isActiveRef.current) {
       setAction({ action: 'OPEN_TERRAIN', 
         mode: viewMode === '3d' ? '3D' : '2D', 
         remoteUrl: GOOGLE_3D_TILES_URL,
@@ -261,10 +293,6 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
         remoteType: "MODEL",
         remoteEpsg: 3857,
         count: counterRef.current++ })
-    }
-    // MapCoreViewer handles 2D/3D switching through viewports
-    if (isActiveRef.current) {
-      // setAction({ action: 'OPEN_TERRAIN', mode: viewMode === '3d' ? '3D' : '2D', count: counterRef.current++ })
     }
   }, [viewMode])
 
