@@ -169,6 +169,54 @@ To use Google Photorealistic 3D Tiles, enable these APIs in Google Cloud Console
 - Map Tiles API
 - Maps JavaScript API
 
+
+## Create your own integration server
+The integration server enables other computers activate the application in it's current
+state to assest the benchmarks. In order to do so, the content of the project is built into a docker that runs a secured NGINX server configured to run with your application.
+
+To do so, you are required to:
+- create a certification and private key pair or use an existing one
+- Build and run the NGINX docker
+
+### Create a docker certification 
+In bash - do the following:
+```bash
+mkdir -p certs
+openssl req -x509 -newkey rsa:2048 -nodes \
+  -keyout certs/server.key \
+  -out certs/server.crt \
+  -days 365 \
+  -subj "/CN=273.36.209.239" # Replace with your server DNS name or address
+```
+
+### Copy a valid docker certification
+```bash
+mkdir -p certs
+cp `your_private_key` certs/server.key
+cp `your_certificate` certs/server.crt
+```
+
+### Build and run the docker for the first time
+``` bash
+./scripts/build-integration.sh --clean
+```
+The docker will be up - you can see it with the command
+```bash
+docker ps
+```
+
+### start and stop the docker
+```bash
+docker compose up -d  # starts the docker
+docker compose down   # stops the docker
+```
+
+### Run the application from the integration server
+- **Local machine**  : `http://localhost:8080`
+- **Remote machine** : `https://name_or_address:8443`
+
+**Note**, when running https with a server that it's certification that was issued from a non trusted source (like comoanies and private peoples that were not authrized.) The browser will warn you and you will need to approve it in order to proceed.
+
 ## 🏗️ Project Structure
 
 ```
@@ -210,10 +258,14 @@ map-bench/
 │   ├── map-style.json          # Custom map style definition
 │   └── favicon.svg
 ├── scripts/
+|   ├── build-integration.sh    # Builds an integration environment
 │   ├── fetch-power-lines.js    # Script to fetch power lines data
 │   └── fetch-religious-buildings.js # Script to fetch religious buildings data
 ├── index.html
 ├── package.json
+├── Dockerfile                  # Integration server docker builder
+├── docker-compose.yml          # Integration server loader / unloader
+├── nginx.conf                  # Integration server NGINX configuration file
 ├── vite.config.js
 ├── .env.example                # Environment variables template
 └── .gitignore

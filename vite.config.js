@@ -47,35 +47,28 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1500,
+    // Explicitly set target and ensure ES modules
+    target: 'esnext',
+    minify: 'esbuild',
     commonjsOptions: {
-      include: [
-        /react\/jsx-runtime/,
-        /react\/jsx-dev-runtime/,
-        /react\/index\.js/,
-        /react-dom/,
-        /mapbox-gl/,
-        /maplibre-gl/,
-        /earcut/,
-        /fast-xml-parser/,
-        /long/,
-        /jszip/,
-        /pako/,
-        /snappyjs/,
-        /pbf/,
-        /mersenne-twister/,
-        /urijs/,
-        /grapheme-splitter/,
-        /bitmap-sdf/,
-        /lerc/,
-        /nosleep\.js/,
-        /@deck\.gl/,
-        /@loaders\.gl/,
-        /node_modules\/(mersenne-twister|urijs|grapheme-splitter|bitmap-sdf|lerc|nosleep\.js|@zip\.js|earcut|fast-xml-parser|long|jszip|pako|snappyjs|pbf|mapbox-gl|maplibre-gl)/
-      ],
-      transformMixedEsModules: true
+      // Transform ALL CommonJS modules in node_modules, not just specific ones
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+      // Force transformation of all CommonJS require() calls to ES modules
+      strictRequires: true,
+      // Ensure default export handling
+      defaultIsModuleExports: true,
+      // Transform dynamic requires
+      dynamicRequireTargets: []
     },
     rollupOptions: {
+      // Ensure React and React-DOM are not treated as external
+      external: [],
       output: {
+        // Ensure ES module format (not CommonJS)
+        format: 'es',
+        // Ensure proper interop for CommonJS modules
+        interop: 'auto',
         manualChunks(id) {
           if (id.includes('node_modules')) {
             if (id.includes('mapbox-gl')) {
@@ -86,6 +79,10 @@ export default defineConfig({
             }
             if (id.includes('@deck.gl') || id.includes('@loaders.gl')) {
               return 'deckgl-loaders'
+            }
+            // Bundle React and React-DOM together to ensure proper transformation
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor'
             }
           }
         }

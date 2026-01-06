@@ -24,6 +24,10 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+# Certification
+certs/**/*.crt
+certs/**/*.key
+
 public/data/maps
 public/package/**
 
