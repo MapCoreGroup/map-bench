@@ -112,10 +112,16 @@ The app includes curated locations organized by continent:
 4. **MapCore Install**
 
 Perform the following command:
-   Perform the following bash commands:
+   Perform the following bash commands (Linux):
    ``` bash
-   export JFROG_TOKEN=your_jfrog_token (used by mapcore username)
-   ./scripts/install_mapcore.bash 12.4.0-MapBench-beta2
+   export JFROG_TOKEN=your_jfrog_token # (provided by mapcore team)
+   ./scripts/install_mapcore.bash 12.4.0-MapBench-beta3
+   ```
+
+   Or in windows
+   ``` cmd
+   SET JFROG_TOKEN=your_jfrog_token # (provided by mapcore team)
+   .\script\install_mapcore 12.4.0-MapBench-beta3
    ```
 
 # WMTS LAYER SET
@@ -196,7 +202,7 @@ cp `your_private_key` certs/server.key
 cp `your_certificate` certs/server.crt
 ```
 
-### Build and run the docker for the first time
+### Build and run the docker for the first time (Linux)
 ``` bash
 ./scripts/build-integration.sh --clean
 ```
@@ -253,14 +259,16 @@ map-bench/
 |   |   ├── MapCore.wasm        # MapCore API Web Assembly
 |   |   ├── MapCore.js.symbols  # MapCore API Symbols
 |   |   ├── MapCore.map         # MapCore API Symbol Mapper
-|   |   ├── MapCoreSymbology*.zip # Uses for NATO 2525 and US DOD App6D Symbyology standards
+|   |   └── MapCoreSymbology*.zip # Uses for NATO 2525 and US DOD App6D Symbyology standards
 │   ├── sprites/                # Map sprites
 │   ├── map-style.json          # Custom map style definition
 │   └── favicon.svg
 ├── scripts/
 |   ├── build-integration.sh    # Builds an integration environment
 │   ├── fetch-power-lines.js    # Script to fetch power lines data
-│   └── fetch-religious-buildings.js # Script to fetch religious buildings data
+│   ├── fetch-religious-buildings.js # Script to fetch religious buildings data
+│   ├── install-mapcore.bash    # Installs MapCore's API client (Linux bash)
+│   └── install-mapcore.cmd     # Installs MapCore's API client (Windows CMD)
 ├── index.html
 ├── package.json
 ├── Dockerfile                  # Integration server docker builder
