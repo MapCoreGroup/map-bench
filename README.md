@@ -108,12 +108,6 @@ The app includes curated locations organized by continent:
    VITE_WAYBACK_MAPTILES_WMTS_URL=https://wayback.maptiles.arcgis.com/arcgis/rest/services/world_imagery/mapserver/wmts/1.0.0/wmtscapabilities.xml
    ```
 
-# WMTS LAYER SET
-VITE_WMTS_LAYERS_LIST = "WB_2025_R12"
-
-# WMTS SERVER CRS
-VITE_WMTS_TILING_SCHEME="GoogleMapsCompatible"   ```
-
 4. **Run the development server**
    ```bash
    npm run dev
@@ -151,15 +145,19 @@ map-bench/
 │   │   ├── MapToggle.jsx       # Map library switcher
 │   │   ├── StatusBar.jsx       # Status bar (tile count, etc.)
 │   │   └── ViewModeToggle.jsx  # 2D/3D toggle
+│   ├── dynamic-layers/         
+│   |   └── flightTracker.js    # Flight tracking dynamic layer
 │   ├── lib/mapcore
 |   |   ├── mc-api.tsx          # MapCore's base component plugin for JavaScript/TypeScript
-|   |   ├── mc-callbacks.tsx    # MapCore's base asynchronous plugin
-|   |   ├── mc-EditMode.tsx     # MapCore's Object world editor logic
-|   |   └── utils.tsx           # MapCore's additional utility functions
+|   |   ├── mc-callbacks.ts     # MapCore's base asynchronous plugin
+|   |   ├── MyEditModeCallback.ts # MapCore's Object world editor logic
+|   |   └── utils.ts            # MapCore's additional utility functions
 │   ├── maps/
 │   │   ├── MapBox.jsx          # Mapbox GL JS implementation
 │   │   ├── MapLibre.jsx        # MapLibre GL implementation
 │   │   ├── MapESRI.jsx         # ArcGIS/ESRI implementation
+│   │   ├── MapLeaflet.jsx      # Leaflet implementation
+│   │   ├── MapCore.jsx         # MapCore implementation
 │   │   └── MapCesium.jsx       # CesiumJS implementation
 |   ├── types/
 |   |   └── MapCore.d.ts        # MapCore's API typescript interfaces
@@ -172,22 +170,16 @@ map-bench/
 │   |   ├── MapCore.js          # MapCore API JavaScrip library
 |   |   ├── MapCore.wasm        # MapCore API Web Assembly
 |   |   ├── MapCore.js.symbols  # MapCore API Symbols
-|   |   ├── MapCore.map         # MapCore API Symbol Mapper
+|   |   ├── MapCore.wasm.map    # MapCore API Symbol Mapper
 |   |   └── MapCoreSymbology*.zip # Uses for NATO 2525 and US DOD App6D Symbyology standards
 │   ├── sprites/                # Map sprites
 │   ├── map-style.json          # Custom map style definition
 │   └── favicon.svg
 ├── scripts/
-|   ├── build-integration.sh    # Builds an integration environment
 │   ├── fetch-power-lines.js    # Script to fetch power lines data
-│   ├── fetch-religious-buildings.js # Script to fetch religious buildings data
-│   ├── install-mapcore.bash    # Installs MapCore's API client (Linux bash)
-│   └── install-mapcore.cmd     # Installs MapCore's API client (Windows CMD)
+│   └── fetch-religious-buildings.js # Script to fetch religious buildings data
 ├── index.html
 ├── package.json
-├── Dockerfile                  # Integration server docker builder
-├── docker-compose.yml          # Integration server loader / unloader
-├── nginx.conf                  # Integration server NGINX configuration file
 ├── vite.config.js
 ├── .env.example                # Environment variables template
 └── .gitignore
