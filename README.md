@@ -313,6 +313,7 @@ npm run preview  # Preview production build
    - Left-click + drag: Pan/Rotate
    - Right-click + drag: Tilt (pitch)
    - Scroll wheel: Zoom
+   - Shift - Accelerate x10 (In MapCore)
 
 ## 🔧 Camera Synchronization
 
