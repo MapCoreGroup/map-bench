@@ -46,7 +46,7 @@ export default defineConfig({
     extensions: ['.js', '.jsx', '.ts', '.tsx']
   },
   build: {
-    chunkSizeWarningLimit: 1500,
+    chunkSizeWarningLimit: 14000,
     // Explicitly set target and ensure ES modules
     target: 'esnext',
     minify: 'esbuild',
