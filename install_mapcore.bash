@@ -20,6 +20,7 @@ fi
 mkdir -p tmp/mapcore-install
 npm login --registry=https://mapcore.jfrog.io/artifactory/api/npm/npm/ --auth-type=web --scope=@mapcore --username=$JFROG_USERNAME --password=$JFROG_TOKEN
 npm install --prefix=tmp/mapcore-install MapCore_32@$VERSION --registry=https://mapcore.jfrog.io/artifactory/api/npm/npm/
+rm -f public/package/*
 mv tmp/mapcore-install/node_modules/MapCore_32/MapCore* public/package/.
 mv public/package/MapCore.d.ts src/types/MapCore.d.ts
 rm -rf tmp

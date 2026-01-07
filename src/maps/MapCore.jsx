@@ -121,7 +121,7 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
         center: [position.x / 100000.0, position.y / 100000.0],
         zoom: currentViewMode.current === '3d' ? altitudeToZoom(position.z) : scaleToZoom(viewport.GetCameraScale()) - 4, 
         pitch: currentViewMode.current === '3d' ? 90 + pPitch.Value : 0.0,
-        bearing: (pYaw.Value - 180)
+        bearing: (pYaw.Value)
       }
     },
     setCamera: (cameraState) => {
@@ -139,7 +139,7 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
       viewport.SetCameraPosition(position, false)
       MapCoreHelper.current.SetCamera2DViewScale(zoomToScale(cameraState.zoom));
       const pitch = currentViewMode.current === '3d' ? cameraState.pitch : -90;
-      viewport.SetCameraOrientation(cameraState.bearing + 90, -90 + pitch, 0, false)
+      viewport.SetCameraOrientation(cameraState.bearing, -90 + pitch, 0, false)
     }
   }), [])
 

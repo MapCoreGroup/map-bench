@@ -952,7 +952,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
         let factor: number = (e.shiftKey ? 10 : 1);
 
         if (viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_3D) {
-            viewport.MoveCameraRelativeToOrientation(new MapCore.SMcVector3D(0, 0, wheelDelta / 8.0 * factor), false);
+            viewport.MoveCameraRelativeToOrientation(new MapCore.SMcVector3D(0, wheelDelta / 8.0 * factor, 0), false);
         }
         else {
             let fScale: number = viewport.GetCameraScale();
@@ -1035,7 +1035,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
                 if (viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_3D) {
                     viewport.MoveCameraRelativeToOrientation(
                         new MapCore.SMcVector3D((nMousePrevX - EventPixel.x) / 2.0 * factor, -
-                            (nMousePrevY - EventPixel.y) / 2.0 * factor, 0), false);
+                            (nMousePrevY - EventPixel.y) / 2.0 * factor, 0), true);
                 }
                 else {
                     viewport.ScrollCamera((nMousePrevX - EventPixel.x) * factor, (nMousePrevY - EventPixel.y) * factor);
@@ -2236,7 +2236,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
         _device = MapCore.IMcMapDevice.Create(init);
         _device.AddRef();
 
-        (MapCore as any).__MaxAllowedGeometricError = 75.0;
+        (MapCore as any).__MaxAllowedGeometricError = 20.0;
         //(MapCore as any).__GeoErrorScaleFactor = 0.1;
 
         initCallbacks();

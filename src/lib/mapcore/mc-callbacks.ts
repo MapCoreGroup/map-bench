@@ -35,15 +35,15 @@ export default function CreateCallbackClasses(TrySetTerainBox: any, OnEditResult
                 // TBD After next version.
                 if (pLayer.GetLayerType() === MapCore.IMcRaw3DModelMapLayer.LAYER_TYPE)
                 {
-                    (pLayer as MapCore.IMcRaw3DModelMapLayer).SetResolutionFactor(16.0);
+                    //(pLayer as MapCore.IMcRaw3DModelMapLayer).SetResolutionFactor(16.0);
                 }
                 else if (pLayer.GetLayerType() === MapCore.IMcNativeServer3DModelMapLayer.LAYER_TYPE) 
                 {
-                    (pLayer as MapCore.IMcNativeServer3DModelMapLayer).SetResolutionFactor(16.0);
+                    // (pLayer as MapCore.IMcNativeServer3DModelMapLayer).SetResolutionFactor(16.0);
                 }
                 else if (pLayer.GetLayerType() === MapCore.IMcNative3DModelMapLayer.LAYER_TYPE)
                 {
-                    (pLayer as MapCore.IMcNative3DModelMapLayer).SetResolutionFactor(16.0);
+                    // (pLayer as MapCore.IMcNative3DModelMapLayer).SetResolutionFactor(16.0);
 //                    (pLayer as MapCore.IMcNative3DModelMapLayer).MaxAllowedGeometricError(750);
                 }
 
