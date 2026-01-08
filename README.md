@@ -126,7 +126,7 @@ The app includes curated locations organized by continent:
 | **Cesium Ion** | Optional | [cesium.com/ion/tokens](https://cesium.com/ion/tokens) |
 | **MapTiler** | Optional | [maptiler.com/cloud](https://www.maptiler.com/cloud/) |
 
-## Google Maps API Setup
+### Google Maps API Setup
 
 To use Google Photorealistic 3D Tiles, enable these APIs in Google Cloud Console:
 - Map Tiles API
