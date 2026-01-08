@@ -123,11 +123,12 @@ The app includes curated locations organized by continent:
 |---------|----------|--------------|
 | **Mapbox** | ✅ Yes | [account.mapbox.com](https://account.mapbox.com/access-tokens/) |
 | **Google Maps** | ✅ Yes | [console.cloud.google.com](https://console.cloud.google.com/apis/credentials) |
-| **ESRI ArcGIS** | ✅ Yes | [developers.arcgis.com](https://developers.arcgis.com/documentation/mapping-apis-and-services/security/api-keys/) |
 | **Cesium Ion** | Optional | [cesium.com/ion/tokens](https://cesium.com/ion/tokens) |
 | **MapTiler** | Optional | [maptiler.com/cloud](https://www.maptiler.com/cloud/) |
 
-### se Google Photorealistic 3D Tiles, enable these APIs in Google Cloud Console:
+## Google Maps API Setup
+
+To use Google Photorealistic 3D Tiles, enable these APIs in Google Cloud Console:
 - Map Tiles API
 - Maps JavaScript API
 
