@@ -28,7 +28,7 @@ IF ERRORLEVEL 1 (
 )
 
 REM Install MapCore package into temp prefix
-npm install --prefix=tmp\mapcore-install MapCore_32@%VERSION% --registry=https://mapcore.jfrog.io/artifactory/api/npm/npm/
+npm install --prefix=tmp\mapcore-install MapCore_32_st@%VERSION% --registry=https://mapcore.jfrog.io/artifactory/api/npm/npm/
 IF ERRORLEVEL 1 (
     echo npm install failed
     EXIT /B 1
@@ -42,7 +42,7 @@ IF EXIST public\package (
 )
 
 REM Move new MapCore files
-move /Y tmp\mapcore-install\node_modules\MapCore_32\MapCore* public\package\.
+move /Y tmp\mapcore-install\node_modules\MapCore_32_st\MapCore* public\package\.
 
 REM Move TypeScript definitions
 IF NOT EXIST src\types (
