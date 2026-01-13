@@ -28,8 +28,7 @@ Thumbs.db
 certs/**/*.crt
 certs/**/*.key
 
-public/data/maps
-public/package/**
+public/package
 
 .env
 
