@@ -5742,6 +5742,7 @@ namespace IMcPathFinder {
                 uTargetID : SMcVariantID;
                 ObjectItemData : SObjectItemFound;
                 aStaticObjectContours : SStaticObjectContour[];
+                aStaticObjectProperties : SMcKeyStringValue[];
             }
 
             class SCreateData {
@@ -5791,6 +5792,7 @@ namespace IMcPathFinder {
                 pMapLayer : IMcStaticObjectsMapLayer;
                 auIDs : SMcVariantID[];
                 aaStaticObjectsContours : SStaticObjectContour[][];
+                aaStaticObjectsProperties : SMcKeyStringValue[][];
             }
             class STraversabilityPoint {
                 Point : SMcVector3D;

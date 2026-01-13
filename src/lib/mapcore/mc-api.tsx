@@ -94,10 +94,16 @@ let lastMemUsageLogTime: number = (new Date).getTime();
 let lastLayersValidityCheckTime: number = (new Date).getTime();
 
 const NUM_OF_RANDOM_OBJECTS: number = 10000;    // Number of random rendered objects
+const activePointers = new Map<number, PointerEvent>();
 
 let minPoint: PointValue = { Value: { z: 0, x: 0, y: 0 } }
 let maxPoint: PointValue = { Value: { z: 0, x: 0, y: 0 } };
-
+let initialPitchDistance: number | null = null;
+let initialScale: number | null = null;
+let initialOrientation: { yaw: number, pitch: number, roll: number } = { yaw: 0, pitch: 0, roll: 0 };
+let previousAngle: number = 0;
+let previousPitch: number = 0;
+let previousScaleRatio : number | null = null;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Helper class to perfrom additional mapcore operations
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -934,6 +940,163 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
         }
     }
 
+    const getDistanceBetweenToPitchPoints = (p1:PointerEvent, p2:PointerEvent) => {
+        const dx = p1.clientX - p2.clientX;
+        const dy = p1.clientY - p2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    const distanceRatio = (p1:PointerEvent, p2:PointerEvent) => {
+        if (initialPitchDistance === null) {
+            return 1;
+        }
+        const fOldDistance = initialPitchDistance;
+        const fNewDistance = getDistanceBetweenToPitchPoints(p1, p2);
+        return fOldDistance / fNewDistance;
+    }
+
+    const angleBetweenTwoPoints = (p1:PointerEvent, p2:PointerEvent) : number => {
+        const dx = p1.clientX - p2.clientX;
+        const dy = p1.clientY - p2.clientY;
+        return 90 - Math.atan2(dy, dx) * 180 / Math.PI;
+    }
+
+    // const pitchBetweenTwoPoints = (viewport: MapCore.IMcMapViewport, p1:PointerEvent, p2:PointerEvent) : number => {
+    //     let yaw : any = {};
+    //     let pitch : any = {};
+    //     let roll : any = {};
+    //     viewport.GetCameraOrientation(yaw, pitch, roll);
+    //     let pos1 : any = {};
+    //     let pos2 : any = {};
+    //     viewport.ScreenToWorldOnPlane(new MapCore.SMcVector3D(p1.clientX, p1.clientY, 0), pos1);
+    //     viewport.ScreenToWorldOnPlane(new MapCore.SMcVector3D(p2.clientX, p2.clientY, 0), pos2);
+    //     viewport.GetTerrainHeight
+    //     const dz = pos1.Value.z - pos2.Value.z;
+    //     const dy = pos1.Value.y - pos2.Value.y;
+    //     alert('dz: ' + dz + ' dy: ' + dy);
+    //     return Math.atan2(dy, dz) * 180 / Math.PI;
+    // }
+
+    /// Performs an afaptive zoom in 3D viewport in the direction of the line of sight
+    const handle3DWheel = (e: WheelEvent, viewport: MapCore.IMcMapViewport) => 
+    {
+        const dZoom3DMinDistance: number = 10;
+        const dZoom3DMaxDistance: number = 2000000;
+        
+        let bHandled: any = {};
+        let eCursor: any = {};
+        let wheelDelta: number = - e.deltaY;
+        editMode?.OnMouseEvent(
+            MapCore.IMcEditMode.EMouseEvent.EME_MOUSE_WHEEL, 
+            new MapCore.SMcPoint(0, 0), 
+            e.ctrlKey, wheelDelta, bHandled, eCursor);
+        // editModeService.AddRenderToList(bHandled.Value)
+        // if (bHandled.Value) {
+        //     return eCursor
+        // }
+        let fFactor: number = (e.shiftKey ? 5 : 1);
+        let fScalefactor: number = Math.pow(1.25, fFactor);
+        if (e.ctrlKey) 
+        {
+            viewport.MoveCameraRelativeToOrientation(new MapCore.SMcVector3D(0, 0, -Math.sign(wheelDelta) * 12.5 * fFactor), true);
+        }
+        else 
+        {
+            let CameraPosition: MapCore.SMcVector3D = viewport.GetCameraPosition();
+            let dDistance: any = {};
+            if (!viewport.GetRayIntersection(CameraPosition, 
+                    viewport.GetCameraForwardVector(), MapCore.DBL_MAX, null, null, dDistance)) {
+                let GeoCalc: MapCore.IMcGeographicCalculations = MapCore.IMcGeographicCalculations.Create(viewport.GetCoordinateSystem());
+
+                let uWidth: any = {}, uHeight: any = {}, IntersectionPoint: any = {};
+                viewport.GetViewportSize(uWidth, uHeight);
+                let ScreenCenter: MapCore.SMcVector3D = new MapCore.SMcVector3D(uWidth.Value / 2, uHeight.Value / 2, 0);
+                if (viewport.GetTerrainsBoundingBox() != null) {
+                    let dDistanceX: any = {}, dDistanceY: any = {}, dToPLaneeDist: any = {};
+                    let Normal: MapCore.SMcVector3D = new MapCore.SMcVector3D(1, 0, 0);
+                    let ScreenToWorldOnPlane = null;
+                    ScreenToWorldOnPlane = viewport.ScreenToWorldOnPlane(
+                        ScreenCenter, IntersectionPoint, 
+                        viewport.GetTerrainsBoundingBox().MinVertex.x, Normal)
+                    let minus: MapCore.SMcVector3D = MapCore.SMcVector3D.Minus(CameraPosition, IntersectionPoint.Value);
+                    let len: any = null;
+                    len = MapCore.SMcVector3D.Length(minus);
+                    if (ScreenToWorldOnPlane && len < dZoom3DMaxDistance) {
+                        GeoCalc.AzimuthAndDistanceBetweenTwoLocations(CameraPosition, IntersectionPoint.Value, {}, dToPLaneeDist, true);
+                        dDistanceX.Value = dToPLaneeDist.Value;
+                    }
+                    let screenToWorldOnPlane: any = null;
+                    screenToWorldOnPlane = viewport.ScreenToWorldOnPlane(
+                        ScreenCenter, IntersectionPoint, 
+                        viewport.GetTerrainsBoundingBox().MaxVertex.x, Normal);
+                    let leng: any = null;
+                    leng = MapCore.SMcVector3D.Length(MapCore.SMcVector3D.Minus(CameraPosition, IntersectionPoint.Value));
+                    if (screenToWorldOnPlane && leng < dZoom3DMaxDistance) 
+                    {
+                        GeoCalc.AzimuthAndDistanceBetweenTwoLocations(CameraPosition, IntersectionPoint.Value, {}, dToPLaneeDist, true);
+                        if (!dDistanceX.Value || dToPLaneeDist.Value > dDistanceX.Value) 
+                        {
+                            dDistanceX.Value = dToPLaneeDist.Value;
+                        }
+                    }
+                    Normal = new MapCore.SMcVector3D(0, 1, 0);
+                    let screenToWorldOnPlane2: any = null;
+                    screenToWorldOnPlane2 = viewport.ScreenToWorldOnPlane(
+                        ScreenCenter, IntersectionPoint, 
+                        viewport.GetTerrainsBoundingBox().MinVertex.y, Normal);
+                    let len2: any = null;
+                    len2 = MapCore.SMcVector3D.Length(MapCore.SMcVector3D.Minus(CameraPosition, IntersectionPoint.Value))
+                    if (screenToWorldOnPlane2 && len2 < dZoom3DMaxDistance) {
+                        GeoCalc.AzimuthAndDistanceBetweenTwoLocations(CameraPosition, IntersectionPoint.Value, {}, dToPLaneeDist, true);
+                        dDistanceY.Value = dToPLaneeDist.Value;
+                    }
+                    let screenToWorldOnPlane3: any = null;
+                    screenToWorldOnPlane3 = viewport.ScreenToWorldOnPlane(
+                        ScreenCenter, IntersectionPoint, viewport.GetTerrainsBoundingBox().MaxVertex.y, Normal);
+                    let len3: any = null;
+                    len3 = MapCore.SMcVector3D.Length(MapCore.SMcVector3D.Minus(CameraPosition, IntersectionPoint.Value));
+                    if (screenToWorldOnPlane3 && len3 < dZoom3DMaxDistance) {
+                        GeoCalc.AzimuthAndDistanceBetweenTwoLocations(CameraPosition, IntersectionPoint.Value, {}, dToPLaneeDist, true);
+                        if (!dDistanceY.Value || dToPLaneeDist.Value > dDistanceY.Value) 
+                        {
+                            dDistanceY.Value = dToPLaneeDist.Value;
+                        }
+                    }
+                    if (!dDistanceX.Value) {
+                        dDistance.Value = dDistanceY.Value;
+                    }
+                    else if (!dDistanceY.Value) {
+                        dDistance.Value = dDistanceX.Value;
+                    }
+                    else {
+                        dDistance.Value = Math.min(dDistanceX.Value, dDistanceY.Value);
+                    }
+                }
+                if (!dDistance.Value) {
+                    let screenToWorldOnPlane4: any = null;
+                    screenToWorldOnPlane4 = viewport.ScreenToWorldOnPlane(ScreenCenter, IntersectionPoint)
+                    let len4: any = null;
+                    len4 = MapCore.SMcVector3D.Length(MapCore.SMcVector3D.Minus(CameraPosition, IntersectionPoint.Value))
+                    if (screenToWorldOnPlane4 && len4 < dZoom3DMaxDistance) 
+                    {
+                        GeoCalc.AzimuthAndDistanceBetweenTwoLocations(CameraPosition, IntersectionPoint.Value, {}, dDistance, true);
+                    }
+                }
+                GeoCalc.Destroy();
+            }
+            if (dDistance.Value) {
+                let dNewDistance: number;
+                if (wheelDelta > 0) {
+                    dNewDistance = Math.max(dDistance.Value / fScalefactor, dZoom3DMinDistance);
+                }
+                else {
+                    dNewDistance = Math.min(dDistance.Value * fScalefactor, dZoom3DMaxDistance);
+                }
+                viewport.MoveCameraRelativeToOrientation(new MapCore.SMcVector3D(0, dDistance.Value - dNewDistance, 0), false);
+            }
+        }
+    }
+
     // Mouse wheel handler
     const handleMouseWheel = (e: WheelEvent) => {
 
@@ -952,7 +1115,8 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
         let factor: number = (e.shiftKey ? 5 : 1);
 
         if (viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_3D) {
-            viewport.MoveCameraRelativeToOrientation(new MapCore.SMcVector3D(0, wheelDelta * factor, 0), false);
+            //viewport.MoveCameraRelativeToOrientation(new MapCore.SMcVector3D(0, wheelDelta * factor, 0), false);
+            handle3DWheel(e, viewport);
         }
         else {
             let fScale: number = viewport.GetCameraScale();
@@ -965,7 +1129,6 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
             }
 
             if (viewport.GetDtmVisualization()) {
-                DoDtmVisualization();
                 DoDtmVisualization();
             }
         }
@@ -985,12 +1148,70 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
             return;
         }
 
+        const fMinPitch: number = -90;
+        const fMaxPitch: number = 0;
+
         let EventPixel: MapCore.SMcPoint = new MapCore.SMcPoint(e.offsetX, e.offsetY);
         let uWidth : any = {};
         let uHeight : any = {};
         viewport.GetViewportSize(uWidth, uHeight);
+        let ViewportCenter: MapCore.SMcPoint = new MapCore.SMcVector2D(uWidth.Value / 2, uHeight.Value / 2);
 
-        if (e.buttons <= 1) {
+        let bIsMobile = false;
+        if (activePointers.has(e.pointerId)) {
+            activePointers.set(e.pointerId, e);
+
+            if (activePointers.size === 2) {
+                const pointers = Array.from(activePointers.values());
+                const angle = angleBetweenTwoPoints(pointers[0], pointers[1]);
+                let fScaleRatio = distanceRatio(pointers[0], pointers[1]);
+                if (viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_2D) 
+                {
+                    viewport.SetCameraScale(initialScale * fScaleRatio);
+                    let center: any = {};
+                    viewport.ScreenToWorldOnPlane(new MapCore.SMcVector3D(uWidth.Value / 2, uHeight.Value / 2, 0), center);
+                    viewport.SetCameraOrientation(angle);
+                    e.stopPropagation();
+                    return;
+                    }
+                else
+                {
+                    let deltaScale: number = fScaleRatio * 50;
+                    if (previousScaleRatio != null)
+                    {
+                        // Calculate how much the scale has changed
+                        // fScaleRatio > 1 means zooming in, < 1 means zooming out
+                        // We want to convert this continuous change to a deltaY value
+                        const scaleChange = fScaleRatio - previousScaleRatio;
+                        
+                        // Convert scale change to deltaY
+                        // A typical mouse wheel tick is ~100, but we want smoother control
+                        // Scale the change proportionally - adjust the multiplier (50-200) to tune sensitivity
+                        deltaScale = scaleChange * 50;
+                    }
+
+                    if (Math.abs(deltaScale) > 0.5)
+                    {
+                        let we : WheelEvent = new WheelEvent('wheel', { 
+                            deltaY: deltaScale,//0.0000001 : -0.0000001,
+                            ctrlKey: false,
+                            shiftKey: false
+                        });
+                        let pos = viewport.GetCameraPosition();
+                        //if (pos.z < 5000 || fScaleRatio < 1)
+                        if (pos.z > 10 && fScaleRatio >= 1 || pos.z < 5000 && fScaleRatio < 1)
+                        {
+                            handle3DWheel(we, viewport);
+                        }
+                    }
+                    previousScaleRatio = fScaleRatio;
+                    return;
+
+                }
+            }
+        }
+
+        if (!bIsMobile && e.buttons <= 1) {
             let bHandled: any = {};
             let eCursor: any = {};//according to map-core
             editMode!.OnMouseEvent(e.buttons === 0 ?
@@ -1005,13 +1226,15 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
                 return;
             }
         }
-        else if (e.buttons === 2) {
+        else if (!bIsMobile && e.buttons === 2) {
             if (rotationCenter) {
                 let mouseDelta = MapCore.SMcVector2D.Minus(
                     new MapCore.SMcVector2D(nMousePrevX, nMousePrevY), 
                     new MapCore.SMcVector2D(EventPixel.x, EventPixel.y));
 
-                viewport.RotateCameraAroundWorldPoint(rotationCenter, -mouseDelta.x * 360 / uWidth.Value!, 0, 0, false);
+                let factor = EventPixel.y < uHeight.Value / 2 ? -1 : 1;
+
+                viewport.RotateCameraAroundWorldPoint(rotationCenter, factor * -mouseDelta.x * 360 / uWidth.Value!, 0, 0, false);
 
                 if (viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_3D) 
                 {
@@ -1022,24 +1245,84 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
                 }
             }
         }
-        else if (e.buttons === 4)
+        else if (!bIsMobile && e.buttons === 4)
         {
             HandleDblClick(e);
             e.stopPropagation();
             return;
         }
 
-        if (e.buttons === 1) {
+        if (!bIsMobile && e.buttons === 1) {
             if (nMousePrevX !== 0) {
-                let factor = (e.shiftKey ? 10 : 1);
-                if (viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_3D) {
-                    viewport.MoveCameraRelativeToOrientation(
-                        new MapCore.SMcVector3D((nMousePrevX - EventPixel.x) / 2.0 * factor, -
-                            (nMousePrevY - EventPixel.y) / 2.0 * factor, 0), true);
+
+            // Calculate the mouse delta
+            let MousePrev: MapCore.SMcVector2D = new MapCore.SMcVector2D(nMousePrevX, nMousePrevY);
+            let MouseCurr: MapCore.SMcVector2D = new MapCore.SMcVector2D(EventPixel.x, EventPixel.y);
+            let MousePrevFromCenter: MapCore.SMcVector2D = MapCore.SMcVector2D.Minus(MousePrev, ViewportCenter);
+            let MouseCurrFromCenter: MapCore.SMcVector2D = MapCore.SMcVector2D.Minus(MouseCurr, ViewportCenter); 
+            let MouseDelta: MapCore.SMcVector2D = MapCore.SMcVector2D.Minus(MouseCurr, MousePrev); 
+
+            if (viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_3D) 
+                {
+                    let mouseCurrWorld: any = {};
+
+                    // Calculate the camera orientation
+                    let fPitch: any = {}, fRoll: any = {};
+                    viewport.GetCameraOrientation(null, fPitch, fRoll); 
+                    let fFOV: number = viewport.GetCameraFieldOfView(); 
+
+                    // Calculate the mouse current world position
+                    let bFound = viewport.ScreenToWorldOnPlane(new MapCore.SMcVector3D(MouseCurr), mouseCurrWorld);
+                    if (bFound) 
+                    {
+                        // Calculate the camera distance
+                        let dCameraDist: number = ViewportCenter.x / Math.tan(fFOV / 2 * Math.PI / 180);
+
+                        // Calculate the yaw and pitch deltas
+                        let fDeltaYaw: number = MapCore.SMcVector2D.GetYawAngleDegrees(
+                            new MapCore.SMcVector2D(MousePrevFromCenter.x, dCameraDist)) - MapCore.SMcVector2D.GetYawAngleDegrees(
+                            new MapCore.SMcVector2D(MouseCurrFromCenter.x, dCameraDist));
+                        let fDeltaPitch: number = MapCore.SMcVector2D.GetYawAngleDegrees(
+                            new MapCore.SMcVector2D(MouseCurrFromCenter.y, dCameraDist)) - MapCore.SMcVector2D.GetYawAngleDegrees(
+                            new MapCore.SMcVector2D(MousePrevFromCenter.y, dCameraDist));
+
+                        // Rotate the camera relative to the orientation
+                        viewport.RotateCameraRelativeToOrientation(fDeltaYaw, Math.min(Math.max(fDeltaPitch, fMinPitch - fPitch.Value), fMaxPitch - fPitch.Value), 0, false);
+
+                        // Calculate the new roll
+                        let fNewRoll: any = {};
+                        viewport.GetCameraOrientation(null, null, fNewRoll); 
+                        let fRollDiff: number = fRoll.Value - fNewRoll.Value;
+
+                        // Calculate the previous world position
+                        let MousePrevWorld: any = {}; 
+                        if (bFound) {
+                            bFound = viewport.ScreenToWorldOnPlane(new MapCore.SMcVector3D(MousePrev), MousePrevWorld);
+                        } 
+                        // Calculate the camera position delta
+                        if (bFound) {
+                            let minus: any = null;
+                            minus = MapCore.SMcVector3D.Minus(MousePrevWorld.Value, mouseCurrWorld.Value);
+                            viewport.SetCameraPosition(minus, true);
+                        }
+
+                        // Rotate the camera around the world point
+                        if (fRollDiff != 0) {
+                            if (bFound) {
+                                viewport.RotateCameraAroundWorldPoint(mouseCurrWorld.Value, 0, 0, fRollDiff, false);
+                            }
+                            else 
+                            {
+                                viewport.SetCameraOrientation(0, 0, fRollDiff, true);
+                            }
+                        }
+                    }
                 }
-                else {
-                    viewport.ScrollCamera((nMousePrevX - EventPixel.x) * factor, (nMousePrevY - EventPixel.y) * factor);
+                else 
+                {
+                    viewport.ScrollCamera(-MouseDelta.x, -MouseDelta.y);
                 }
+
 
                 e.preventDefault?.();
                 //e.cancelBubble = true;
@@ -1081,41 +1364,133 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
                 return;
             }
         }
+        previousAngle = 0;
+        previousScaleRatio = null;
+
+        activePointers.set(e.pointerId, e);
+        if (activePointers.size === 2) {
+            let yaw : any = {};
+            let pitch : any = {};
+            let roll : any = {};
+            viewport.GetCameraOrientation(yaw, pitch, roll);
+            const pointers = Array.from(activePointers.values());
+            initialPitchDistance = getDistanceBetweenToPitchPoints(pointers[0], pointers[1]);
+            initialOrientation = { yaw: yaw.Value, pitch: pitch.Value, roll: roll.Value };
+            if (viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_2D)
+            {
+                initialScale = viewport.GetCameraScale();
+            }
+        }
 
         // The following handles right click in case of rotation
-        if (e.buttons === 2) {
+        if (e.buttons === 2 || activePointers.size === 2) {
             let uWidth : any = {};
             let uHeight : any = {};
             viewport.GetViewportSize(uWidth, uHeight);
             rotationCenter = ViewportScreenToWorld(viewport, new MapCore.SMcVector3D(uWidth.Value / 2, uHeight.Value / 2, 0));
+            
+            nMousePrevX = e.clientX;
+            nMousePrevY = e.clientY;
         }
         else {
             rotationCenter = null;
         }
 
-        // Left click handling - rotation is not allowed in this case
-        let EventPixel: MapCore.SMcPoint = new MapCore.SMcPoint(e.offsetX!, e.offsetY!);
-        mouseDownButtons = e.buttons;
-        if (e.buttons === 1) {
-            let bHandled: any = {};
-            let eCursor: any = {};//according to map-core
-            editMode.OnMouseEvent(MapCore.IMcEditMode.EMouseEvent.EME_BUTTON_PRESSED,
-                EventPixel, e.ctrlKey, 0, bHandled, eCursor);
-            if (bHandled.Value) {
-                e.preventDefault?.();
-                //e.cancelBubble = true;
-                if (e.stopPropagation) e.stopPropagation();
-                return;
-            }
+        if (activePointers.size < 2) {
+            
+            // Left click handling - rotation is not allowed in this case
+            let EventPixel: MapCore.SMcPoint = new MapCore.SMcPoint(e.offsetX!, e.offsetY!);
+            mouseDownButtons = e.buttons;
+            if (e.buttons === 1) 
+            {
+                let uWidth : any = {};
+                let uHeight : any = {};
+                viewport.GetViewportSize(uWidth, uHeight);
+                let bHandled: any = {};
+                let eCursor: any = {};//according to map-core
 
-            if (onHeadingChange) {
-                let yaw : any = {};
-                viewport.GetCameraOrientation(yaw);
-                onHeadingChange(yaw.Value);
+                editMode.OnMouseEvent(MapCore.IMcEditMode.EMouseEvent.EME_BUTTON_PRESSED,
+                    EventPixel, e.ctrlKey, 0, bHandled, eCursor);
+                if (bHandled.Value) {
+                    e.preventDefault?.();
+                    //e.cancelBubble = true;
+                    if (e.stopPropagation) e.stopPropagation();
+                    return;
+                }
+
+                if (onHeadingChange) {
+                    let yaw : any = {};
+                    viewport.GetCameraOrientation(yaw);
+                    onHeadingChange(yaw.Value);
+                }
+        
+                nMousePrevX = EventPixel.x;
+                nMousePrevY = EventPixel.y;
+
+                let yawDelta = 0;
+                let pitchDelta = 0;
+                if (e.clientX <= uWidth.Value / 10)
+                {
+                    yawDelta = 10;
+                }  
+                else if (e.clientX >= uWidth.Value - uWidth.Value / 10)
+                {
+                    yawDelta = -10;
+                }
+                else if (e.clientY <= uHeight.Value / 10)
+                {
+                    pitchDelta = 1.5;
+                }
+                else if (e.clientY >=uHeight.Value - uHeight.Value / 10)
+                {
+                    pitchDelta = -1.5;
+                }
+
+                if (pitchDelta != 0 || yawDelta != 0 && viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_3D)
+                {
+
+                    let bFound = false;
+                    let center: any = {};
+                    // Calculate the camera orientation
+                    let fPitch: any = {}, fRoll: any = {};
+                    viewport.GetCameraOrientation(null, fPitch, fRoll); 
+
+
+                    while (!bFound)
+                    {
+                        bFound = viewport.ScreenToWorldOnPlane(
+                            new MapCore.SMcVector3D(uWidth.Value / 2, uHeight.Value / 2, 0), center);
+                        if (bFound)
+                        {
+                            rotationCenter = center.Value;
+                        }
+                        else
+                        {
+                            uHeight.Value -= 10;
+                            if (uHeight.Value <= 10)
+                            {
+                                return;
+                            }
+                        }
+                    }
+                    
+                    let newYaw : any = {};
+                    let newPitch : any = {};    
+                    let newRoll : any = {};
+                    viewport.RotateCameraAroundWorldPoint(rotationCenter, yawDelta, pitchDelta, 0, true);
+                    viewport.GetCameraOrientation(newYaw, newPitch, newRoll);
+                    let rollDiff = newRoll.Value - fRoll.Value;
+                    if (rollDiff != 0 && viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_3D)
+                    {
+                        viewport.RotateCameraAroundWorldPoint(rotationCenter, 0, 0, -rollDiff, false);
+                    }   
+                    viewport.Render();
+                    e.preventDefault?.();
+                    if (e.stopPropagation) e.stopPropagation();
+                    return;
+                }
+        
             }
-    
-            nMousePrevX = EventPixel.x;
-            nMousePrevY = EventPixel.y;
         }
        
         e.preventDefault?.();
@@ -1131,8 +1506,29 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
             return;
         }
 
+        activePointers.forEach((value, key) => {
+            if (key === e.pointerId) {
+                activePointers.delete(key);
+            }
+        });
+        //activePointers.delete(e.pointerId);
+        if (activePointers.size < 2) {
+            initialPitchDistance = null;
+            initialOrientation = { yaw: 0, pitch: 0, roll: 0 };
+            initialScale = null;
+            previousAngle = 0;
+
+            e.preventDefault?.();
+            if (e.stopPropagation) e.stopPropagation();
+            return;
+        }
+
         let EventPixel: MapCore.SMcPoint = new MapCore.SMcPoint(e.offsetX, e.offsetY);
         let buttons: number = mouseDownButtons & ~e.buttons;
+        if (viewport.GetMapType() === MapCore.IMcMapCamera.EMapType.EMT_2D)
+        {
+            initialScale = null;
+        }
         if (buttons === 1) {
             let bHandled: any = {};
             let eCursor = {};
@@ -1523,7 +1919,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
         let bFound = false;
         if (bIs2D) {
             viewport.GetViewportSize(uWidth, uHeight);
-            bFound = viewport.ScreenToWorldOnTerrain(midScreenPos, pos);
+            bFound = viewport.ScreenToWorldOnPlane(midScreenPos, pos);
             if (!bFound) {
                 return MapCore.v3MinDouble;
             }
@@ -1547,25 +1943,25 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
                     // Convert enum values to bit flags and combine them
                     // TypeScript enums: ELK_DTM=0, ELK_STATIC_OBJECTS=3 (sequential)
                     const elkDTM = 0; //Number(MapCore.IMcMapLayer.ELayerKind.ELK_DTM.Value);
-                    const elkStaticObjects = 3; //Number(MapCore.IMcMapLayer.ELayerKind.ELK_STATIC_OBJECTS.Value);
+                    const elkStaticObjects = 4; //Number(MapCore.IMcMapLayer.ELayerKind.ELK_STATIC_OBJECTS.Value);
                     console.log("Enum values - ELK_DTM:", elkDTM, "ELK_STATIC_OBJECTS:", elkStaticObjects, 
                                 "typeof:", typeof elkDTM, typeof elkStaticObjects);
                     
                     // Convert to bit flags: 1 << enumValue
                     // ELK_DTM (0) -> 1 << 0 = 1 (binary: 0001)
-                    // ELK_STATIC_OBJECTS (3) -> 1 << 3 = 8 (binary: 1000)
+                    // ELK_STATIC_OBJECTS (4) -> 1 << 4 = 16 (binary: 10000)
                     const bitFlagDTM = 1 << elkDTM;
                     const bitFlagStaticObjects = 1 << elkStaticObjects;
                     console.log("Bit flags - DTM:", bitFlagDTM, "StaticObjects:", bitFlagStaticObjects);
                     
                     // Combine using bitwise OR: 1 | 8 = 9 (binary: 1001)
-                    params.uItemKindsBitField = bitFlagDTM | bitFlagStaticObjects;
+                    params.uItemKindsBitField = 0; // All 1//bitFlagDTM | bitFlagStaticObjects;
                     console.log("Final bit field value:", params.uItemKindsBitField, "binary:", params.uItemKindsBitField.toString(2));
                     params.pAsyncQueryCallback = new CAsyncQueryCallback(
                         (bHeightFound: any, height: any) => {
-                            bFound = bHeightFound.Value;
+                            bFound = bHeightFound;
                             if (bFound) {
-                                pos.Value.z = height.Value;
+                                pos.Value.z = height;
                             }
                             bDone = true;
                             console.log("Found Altitude : ", pos.Value.z);
@@ -1856,7 +2252,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
         let bFound = false;
         let targetPosition = new MapCore.SMcVector3D(position.x, position.y, 0.0);
         qParams.eTerrainPrecision = MapCore.IMcSpatialQueries.EQueryPrecision.EQP_HIGHEST;
-        qParams.uItemKindsBitField = MapCore.IMcMapLayer.ELayerKind.ELK_DTM;
+        //qParams.uItemKindsBitField = 0; //MapCore.IMcMapLayer.ELayerKind.ELK_DTM;
         qParams.pAsyncQueryCallback = new CAsyncQueryCallback(
             (bHeightFound: any, height: any) => 
             {
