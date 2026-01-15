@@ -316,7 +316,9 @@ const MapESRI = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
         () => view.current?.scale,
         (scale) => {
           if (!isMounted || !scale) return
-          // Update power lines size
+          // Update power lines size - DISABLED to prevent flickering
+          // We now use LineSymbol3DLayer which maintains constant screen size automatically
+          /*
           const powerLinesLayer = customLayers.current['power-lines']
           const powerLinesStyle = customLayers.current['power-lines-style']
           if (powerLinesLayer && powerLinesStyle) {
@@ -326,6 +328,7 @@ const MapESRI = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
               powerLinesLayer.renderer = createPowerLineRenderer(newSize, powerLinesStyle.lineColor, powerLinesStyle.lineOpacity)
             }
           }
+          */
           
           // Update religious buildings renderer based on scale, view mode, and size
           const religiousLayer = customLayers.current['religious-buildings']
@@ -672,6 +675,31 @@ const MapESRI = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
           renderer: initialRenderer,
           labelingInfo: renderers.labelClass ? [renderers.labelClass] : undefined,
           labelsVisible: !!renderers.labelClass,
+          elevationInfo: {
+            mode: 'relative-to-ground'
+          },
+          featureReduction: {
+            type: "cluster",
+            clusterRadius: "100px",
+            labelingInfo: [{
+              deconflictionStrategy: "none",
+              labelExpressionInfo: {
+                expression: "Text($feature.cluster_count, '#,###')"
+              },
+              symbol: {
+                type: "text",
+                color: "#ffffff",
+                haloColor: "#000000",
+                haloSize: "1px",
+                font: {
+                  weight: "bold",
+                  family: "sans-serif",
+                  size: "12px"
+                }
+              },
+              labelPlacement: "center-center",
+            }]
+          },
           popupEnabled: true,
           popupTemplate: {
             title: '{name}',

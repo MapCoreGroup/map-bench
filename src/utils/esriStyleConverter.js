@@ -8,6 +8,7 @@ import UniqueValueRenderer from '@arcgis/core/renderers/UniqueValueRenderer'
 import PointSymbol3D from '@arcgis/core/symbols/PointSymbol3D'
 import IconSymbol3DLayer from '@arcgis/core/symbols/IconSymbol3DLayer'
 import LineSymbol3D from '@arcgis/core/symbols/LineSymbol3D'
+import LineSymbol3DLayer from '@arcgis/core/symbols/LineSymbol3DLayer'
 import PathSymbol3DLayer from '@arcgis/core/symbols/PathSymbol3DLayer'
 import LabelSymbol3D from '@arcgis/core/symbols/LabelSymbol3D'
 import TextSymbol3DLayer from '@arcgis/core/symbols/TextSymbol3DLayer'
@@ -353,13 +354,9 @@ export function createRendererFromStyleLayer(styleLayer, layerType, iconLayer) {
     const renderer = new SimpleRenderer({
       symbol: new LineSymbol3D({
         symbolLayers: [
-          new PathSymbol3DLayer({
-            profile: 'circle',
-            width: baseWidth,
-            height: baseWidth,
-            material: { color: hexToColor(lineColor, lineOpacity) },
-            cap: 'round',
-            join: 'round'
+          new LineSymbol3DLayer({
+            size: baseWidth,
+            material: { color: hexToColor(lineColor, lineOpacity) }
           })
         ]
       })
@@ -639,13 +636,9 @@ export function createPowerLineRenderer(size, lineColor, lineOpacity) {
   return new SimpleRenderer({
     symbol: new LineSymbol3D({
       symbolLayers: [
-        new PathSymbol3DLayer({
-          profile: 'circle',
-          width: size,
-          height: size,
-          material: { color: hexToColor(lineColor, lineOpacity) },
-          cap: 'round',
-          join: 'round'
+        new LineSymbol3DLayer({
+          size: 2, // Constant screen size
+          material: { color: hexToColor(lineColor, lineOpacity) }
         })
       ]
     })
