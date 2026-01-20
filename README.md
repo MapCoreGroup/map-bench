@@ -176,6 +176,10 @@ map-bench/
 │   ├── sprites/                # Map sprites
 │   ├── map-style.json          # Custom map style definition
 │   └── favicon.svg
+├── build mapcore/              # MapCore WASM build configuration
+│   ├── wasm_config.py          # Python build script for MapCore WASM
+│   ├── wasm_config.json        # Build configuration (target, configuration type)
+│   └── wasm_config.bat         # Windows batch wrapper for build script
 ├── scripts/
 │   ├── fetch-power-lines.js    # Script to fetch power lines data
 │   └── fetch-religious-buildings.js # Script to fetch religious buildings data
@@ -209,6 +213,7 @@ map-bench/
 npm run dev      # Start development server
 npm run build    # Build for production
 npm run preview  # Preview production build
+npm run wasm-config # Build MapCore WASM module (only when mapcore repo exists as sibling to map-bench)
 ```
 
 ## 🎮 Usage
