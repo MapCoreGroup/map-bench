@@ -213,7 +213,7 @@ map-bench/
 npm run dev      # Start development server
 npm run build    # Build for production
 npm run preview  # Preview production build
-npm run wasm-config # Build MapCore WASM module (only when mapcore repo exists as sibling to map-bench)
+npm run wasm-config # Build MapCore WASM module (Windows only; only when mapcore repo exists as sibling to map-bench)
 ```
 
 ## 🎮 Usage
