@@ -5,19 +5,19 @@ let uCameraUpdateCounter = 0;
 let lastId = 0;
 
 export type WebServerLayersResultsEventHandler = (
-    eStatus: MapCore.IMcErrors.ECode, 
-    strServerURL: string, 
-    eWebMapServiceType: MapCore.IMcMapLayer.EWebMapServiceType, 
-    aLayers: MapCore.IMcMapLayer.SServerLayerInfo[], 
+    eStatus: MapCore.IMcErrors.ECode,
+    strServerURL: string,
+    eWebMapServiceType: MapCore.IMcMapLayer.EWebMapServiceType,
+    aLayers: MapCore.IMcMapLayer.SServerLayerInfo[],
     astrServiceMetadataURLs: string,
-    strServiceProviderName: string) => void;  
+    strServiceProviderName: string) => void;
 
-export let CCameraUpdateCallback: any, CEditModeCallback: any, CAsyncQueryCallback: any, CAsyncOperationCallback: any;
+export let CCameraUpdateCallback: any, CEditModeCallback: any, CAsyncQueryCallback: any, CAsyncOperationCallback: any, COverlayManagerCallback: any;
 
 //export class MapCoreCallbacks
 // function creating callbacks
 export default function CreateCallbackClasses(TrySetTerainBox: any, OnEditResult: any,
-      onWebServerLayersResults: WebServerLayersResultsEventHandler | null) {
+    onWebServerLayersResults: WebServerLayersResultsEventHandler | null) {
     // create callback class and instance implementing MapCore.IMcMapLayer.IReadCallback interface
     let CLayerReadCallback: any = MapCore.IMcMapLayer.IReadCallback.extend("IMcMapLayer.IReadCallback",
         {
@@ -30,21 +30,18 @@ export default function CreateCallbackClasses(TrySetTerainBox: any, OnEditResult
                 }
                 lastId = lastId + 1;
                 pLayer.SetID(lastId);
-                console.log(`Layer ${pLayer.GetID()} initialized`); 
+                console.log(`Layer ${pLayer.GetID()} initialized`);
 
                 // TBD After next version.
-                if (pLayer.GetLayerType() === MapCore.IMcRaw3DModelMapLayer.LAYER_TYPE)
-                {
+                if (pLayer.GetLayerType() === MapCore.IMcRaw3DModelMapLayer.LAYER_TYPE) {
                     //(pLayer as MapCore.IMcRaw3DModelMapLayer).SetResolutionFactor(16.0);
                 }
-                else if (pLayer.GetLayerType() === MapCore.IMcNativeServer3DModelMapLayer.LAYER_TYPE) 
-                {
+                else if (pLayer.GetLayerType() === MapCore.IMcNativeServer3DModelMapLayer.LAYER_TYPE) {
                     // (pLayer as MapCore.IMcNativeServer3DModelMapLayer).SetResolutionFactor(16.0);
                 }
-                else if (pLayer.GetLayerType() === MapCore.IMcNative3DModelMapLayer.LAYER_TYPE)
-                {
+                else if (pLayer.GetLayerType() === MapCore.IMcNative3DModelMapLayer.LAYER_TYPE) {
                     // (pLayer as MapCore.IMcNative3DModelMapLayer).SetResolutionFactor(16.0);
-//                    (pLayer as MapCore.IMcNative3DModelMapLayer).MaxAllowedGeometricError(750);
+                    //                    (pLayer as MapCore.IMcNative3DModelMapLayer).MaxAllowedGeometricError(750);
                 }
 
                 TrySetTerainBox();
@@ -109,11 +106,9 @@ export default function CreateCallbackClasses(TrySetTerainBox: any, OnEditResult
             },
 
             // Optional
-            EditItemResults : function (pObject : MapCore.IMcObject, pItem : MapCore.IMcObjectSchemeItem, nExitCode : number) {
-                if (nExitCode === 1)
-                {
-                    if (pObject.GetID() === 5 || pObject.GetID() === 7 || pObject.GetLocationPoints(0).length === 1)
-                    {
+            EditItemResults: function (pObject: MapCore.IMcObject, pItem: MapCore.IMcObjectSchemeItem, nExitCode: number) {
+                if (nExitCode === 1) {
+                    if (pObject.GetID() === 5 || pObject.GetID() === 7 || pObject.GetLocationPoints(0).length === 1) {
                         OnEditResult(pObject);
                     }
                 }
@@ -191,7 +186,7 @@ export default function CreateCallbackClasses(TrySetTerainBox: any, OnEditResult
             },
 
             // mandatory
-            OnError: function (eErrorCode: MapCore.IMcErrors.ECode ) {
+            OnError: function (eErrorCode: MapCore.IMcErrors.ECode) {
                 if (this.OnError) {
                     this.OnError(eErrorCode);
                 }
@@ -211,12 +206,23 @@ export default function CreateCallbackClasses(TrySetTerainBox: any, OnEditResult
 
             OnWebServerLayersResults: function (
                 eStatus: MapCore.IMcErrors.ECode, strServerURL: string, eWebMapServiceType: MapCore.IMcMapLayer.EWebMapServiceType, aLayers: MapCore.IMcMapLayer.SServerLayerInfo[], astrServiceMetadataURLs: string, strServiceProviderName: string) {
-                if (onWebServerLayersResults) 
-                {
+                if (onWebServerLayersResults) {
                     onWebServerLayersResults(eStatus, strServerURL, eWebMapServiceType, aLayers, astrServiceMetadataURLs, strServiceProviderName);
                 }
-      
+
                 //this.OnResults.apply(null, arguments);
+                this.delete();
+            },
+        });
+    COverlayManagerCallback = MapCore.IMcOverlayManager.IAsyncOperationCallback.extend("IMcOverlayManager.IAsyncOperationCallback",
+        {
+            // optional
+            __construct: function (OnResults: any) {
+                this.__parent.__construct.call(this);
+                this.OnResults = OnResults;
+            },
+            OnLoadObjectsFromRawVectorDataResult: function (strDataSource: string, eStatus: MapCore.IMcErrors.ECode, apLoadedObjects: MapCore.IMcObject[]) {
+                this.OnResults.apply(null, arguments);
                 this.delete();
             },
         });
@@ -224,4 +230,4 @@ export default function CreateCallbackClasses(TrySetTerainBox: any, OnEditResult
 }
 
 
-    
+

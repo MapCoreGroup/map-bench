@@ -1578,10 +1578,11 @@ declare namespace MapCore {
         function UnloadFilesListSync(strFilesListPath : string) : void;
         function LoadSingleFileAsync(strFilesServerURL : string, strFilePath : string, pCallback : IMcMapDevice.ICallback) : void;
         function UnloadSingleFileSync(strFilePath : string) : void;
-        function GetMemorySize() : number;
-        function GetMaxMemoryUsage() : number;
-        function GetHeapSize() : number;
-        function SetHeapSize(uSize : number) : void;
+        function GetMemorySize() : BigInt;
+	    function SetWebWorkersHeapLimits(uSinleWorkerHeapMaxSize : BigInt, uTotalHeapMaxSize : BigInt) : void;
+        function GetMaxMemoryUsage() : BigInt;
+        function GetHeapSize(bIncludingWebWorkers? : boolean) : BigInt;
+        function SetHeapSize(uSize : BigInt) : void;
         function MapNodeJsDirectory(strPhysicalDirectory : string, strVirtualDirectory : string) : void;
         function UnMapNodeJsDirectory(strVirtualDirectory : string) : void;
         function CreateFileSystemDirectory(strDirectory : string) : void;
