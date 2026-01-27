@@ -53,7 +53,6 @@ export const McObjectsManagerService = {
             if (layer.layout) {
                 layer.layout.visibility = layer.layout.visibility === 'none' ? 'visible' : layer.layout.visibility;
                 if (layer.layout['icon-image']) {
-                    console.log(layer.layout['icon-image']);
                     layer.layout['icon-image'] = layer.layout['icon-image'].map((item: any) => {
                         if (typeof item === 'string' && item.startsWith('icon-')) {
                             return `http:sprites/${item.replace('icon-', '')}.svg`;
@@ -132,6 +131,10 @@ export const McObjectsManagerService = {
                 else {
                     newOverlay.Remove();
                 }
+                //Delete files and directory from virtual file system
+                MapCore.IMcMapDevice.DeleteFileSystemFile(`/flights-data-${currentUpdateIndex}/flight-data.geojson`);
+                MapCore.IMcMapDevice.DeleteFileSystemFile(`/flights-data-${currentUpdateIndex}/flight-tracking-style.json`);
+                MapCore.IMcMapDevice.DeleteFileSystemEmptyDirectory(`/flights-data-${currentUpdateIndex}`);
             });
             newOverlay.LoadObjectsFromRawVectorData(sRawParams, asyncOperationCallBack);
         };

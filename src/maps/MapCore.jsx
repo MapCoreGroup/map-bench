@@ -338,7 +338,6 @@ const MapCore = forwardRef(({ currentLocation, viewMode = '3d', isActive = true,
         // Flights
         if (McObjectsManagerService.flightsOverlay) {
           McObjectsManagerService.setOverlayVisibility(McObjectsManagerService.flightsOverlay, layers['flight-tracking']?.visible);
-          McObjectsManagerService.setOverlayVisibility(McObjectsManagerService.flightsPathsOverlay, layers['flight-tracking']?.visible);
         } else {
           McObjectsManagerService.createFlightsOverlay(layers['flight-tracking']?.visible);
         }
