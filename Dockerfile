@@ -1,21 +1,26 @@
-# Use a slim Python base for efficiency
-FROM python:3.10-slim
-
-# Set working directory
+# Stage 1: Build the React application
+FROM node:18-slim AS build
 WORKDIR /app
 
-# Install system dependencies (essential for many map/GIS tools)
-RUN apt-get update && apt-get install -y \
-    git \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# Install dependencies first (better caching)
+COPY package*.json ./
+RUN npm install
 
-# Copy requirements and install
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application
+# Copy source and build
 COPY . .
+RUN npm run build
 
-# Set the entry point (Adjust based on which script you want to run)
-CMD ["python", "main.py"]
+# Stage 2: Serve the production build with Nginx
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
+
+# Clean default nginx files and copy build output
+RUN rm -rf ./*
+COPY --from=build /app/dist .
+
+# Copy a custom nginx config if you have one (optional)
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
