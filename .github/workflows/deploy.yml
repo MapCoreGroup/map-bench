@@ -1,0 +1,29 @@
+name: Deploy to Azure Container Apps
+
+on:
+  push:
+    branches: [ Feature/containerization ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and Push to ACR
+        run: |
+          az acr build --registry ${{ secrets.CONTAINER_REGISTRY }} --image map-bench:${{ github.sha }} .
+
+      - name: Deploy to Container Apps
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          acrName: ${{ secrets.CONTAINER_REGISTRY }}
+          containerAppName: map-bench-app
+          resourceGroup: ${{ secrets.AZURE_MC_RESOURCE_GROUP }}
+          imageToDeploy: ${{ secrets.CONTAINER_REGISTRY }}/map-bench:${{ github.sha }}
