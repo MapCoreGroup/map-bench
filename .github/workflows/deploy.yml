@@ -1,4 +1,4 @@
-name: Deploy to Azure Container Apps
+name: Fast Deploy to ACA
 
 on:
   push:
@@ -11,19 +11,35 @@ jobs:
       - name: Checkout Source
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build and Push to ACR
+# This step creates the file that Docker Buildx will 'mount'
+      - name: Create build.env
         run: |
-          az acr build --registry ${{ secrets.CONTAINER_REGISTRY }} --image map-bench:${{ github.sha }} .
+          cat <<EOF > build.env
+          ${{ secrets.ENV_FILE_CONTENT }}
+          EOF
 
-      - name: Deploy to Container Apps
+      # This step pushes that file into the Docker build context securely
+      - name: Build and Push to ACR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.CONTAINER_REGISTRY }}/map-bench:${{ github.sha }}
+          secrets: |
+            "env_file=./build.env"
+
+      - name: Deploy to Azure Container Apps
         uses: azure/container-apps-deploy-action@v1
         with:
-          acrName: ${{ secrets.CONTAINER_REGISTRY }}
+          acrName: ${{ secrets.ACR_NAME }}
           containerAppName: map-bench-app
           resourceGroup: ${{ secrets.AZURE_MC_RESOURCE_GROUP }}
           imageToDeploy: ${{ secrets.CONTAINER_REGISTRY }}/map-bench:${{ github.sha }}
