@@ -1,26 +1,27 @@
-# Stage 1: Build the React application
+# Stage 1: Build the React/Vite app
 FROM node:18-slim AS build
 WORKDIR /app
 
-# Install dependencies first (better caching)
+# Copy package files
 COPY package*.json ./
-RUN npm install
 
-# Copy source and build
+# Mount the secret to access the JFROG_TOKEN during install
+RUN --mount=type=secret,id=env_file \
+    export $(grep -v '^#' /run/secrets/env_file | xargs) && \
+    if [ ! -z "$JFROG_TOKEN" ]; then \
+      echo "//your-jfrog-url/:_authToken=$JFROG_TOKEN" > .npmrc; \
+    fi && \
+    npm install
+
 COPY . .
-RUN npm run build
 
-# Stage 2: Serve the production build with Nginx
+# Mount it again for the actual build to bake in VITE_ variables
+RUN --mount=type=secret,id=env_file,target=/app/.env \
+    npm run build
+# Stage 2: Serve with Nginx
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
-
-# Clean default nginx files and copy build output
 RUN rm -rf ./*
 COPY --from=build /app/dist .
-
-# Copy a custom nginx config if you have one (optional)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
