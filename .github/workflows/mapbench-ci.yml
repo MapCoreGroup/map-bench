@@ -56,8 +56,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker:${{ steps.bump_version.outputs.new_tag }}
-          secrets: |
+          tags: |
+            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ steps.bump_version.outputs.new_tag }}
+            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:latest          secrets: |
             "env_file=./build.env"
             "jfrog_token=${{ secrets.JFROG_TOKEN }}"
 
