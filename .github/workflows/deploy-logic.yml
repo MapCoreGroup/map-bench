@@ -19,6 +19,8 @@ on:
         required: true
       AZURE_MC_RESOURCE_GROUP:
         required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
 
 jobs:
   deploy:
