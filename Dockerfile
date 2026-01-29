@@ -3,7 +3,7 @@ FROM node:22 AS builder
 WORKDIR /app
 
 # Registry env matching SR logic
-ENV npm_config_registry=https://mapcore.jfrog.io/artifactory/api/npm/npm/
+ENV npm_config_registry=https://mapcore.jfrog.io/artifactory/api/npm/npm-virtual/
 
 COPY package.json ./
 COPY .npmrc ./
