@@ -34,11 +34,11 @@ jobs:
         uses: azure/CLI@v1
         with:
           inlineScript: |
+            # Pulls from JFrog Registry
             IMAGE_URL="${{ secrets.CONTAINER_REGISTRY }}/map-bench:${{ inputs.version_tag }}"
             
-            # Note: ACA must have registry credentials configured to pull from JFrog
             az containerapp update \
               --name "${{ inputs.container_app_name }}" \
-              --resource-group "${{ secrets.AZURE_MC_RESOURCE_GROUP}}" \
+              --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --image "$IMAGE_URL" \
               --set-env-vars FORCE_REDEPLOY=$(date +%s)
