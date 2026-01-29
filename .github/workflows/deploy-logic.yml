@@ -1,0 +1,44 @@
+name: Reusable Deploy Logic
+
+on:
+  workflow_call:
+    inputs:
+      environment_name:
+        required: true
+        type: string
+      version_tag:
+        required: true
+        type: string
+      container_app_name:
+        required: true
+        type: string
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+      CONTAINER_REGISTRY:
+        required: true
+      AZURE_RESOURCE_GROUP:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment_name }}
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Container App
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            IMAGE_URL="${{ secrets.CONTAINER_REGISTRY }}/map-bench:${{ inputs.version_tag }}"
+            
+            # Note: ACA must have registry credentials configured to pull from JFrog
+            az containerapp update \
+              --name "${{ inputs.container_app_name }}" \
+              --resource-group "${{ secrets.AZURE_MC_RESOURCE_GROUP}}" \
+              --image "$IMAGE_URL" \
+              --set-env-vars FORCE_REDEPLOY=$(date +%s)
