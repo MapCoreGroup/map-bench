@@ -1,20 +1,21 @@
-# Stage 1: Builder
+# Stage 1: Build
 FROM node:22 AS builder
 WORKDIR /app
 
-# Matches SR's exact virtual registry path
-ENV npm_config_registry=https://mapcore.jfrog.io/artifactory/api/npm/npm-virtual/
+# Registry env matching SR logic
+ENV npm_config_registry=https://mapcore.jfrog.io/artifactory/api/npm/npm/
 
 COPY package.json ./
 COPY .npmrc ./
 
-# SECURE INSTALL: Passes the token from the secret mount to the npm environment
+# This line mirrors the SR 'RUN --mount' command exactly
+# It reads the secret provided by the GitHub Action
 RUN --mount=type=secret,id=jfrog_token \
     JFROG_TOKEN=$(cat /run/secrets/jfrog_token) npm install
 
 COPY . .
 
-# Build the Vite application with environment secrets
+# Build Vite application using the .env secret mount
 RUN --mount=type=secret,id=env_file,target=/app/.env \
     npm run build
 
