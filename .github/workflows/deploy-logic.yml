@@ -34,9 +34,13 @@ jobs:
         uses: azure/CLI@v1
         with:
           inlineScript: |
-            # Pulls from JFrog Registry
+            # 1. Force the CLI to the correct subscription (CRITICAL FIX)
+            az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            
+            # 2. Construct the URL matching your JFrog repository
             IMAGE_URL="${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ inputs.version_tag }}"
             
+            # 3. Update the app in the specific Resource Group
             az containerapp update \
               --name "${{ inputs.container_app_name }}" \
               --resource-group "${{ secrets.AZURE_MC_RESOURCE_GROUP }}" \
