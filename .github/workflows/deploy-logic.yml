@@ -17,7 +17,7 @@ on:
         required: true
       CONTAINER_REGISTRY:
         required: true
-      AZURE_RESOURCE_GROUP:
+      AZURE_MC_RESOURCE_GROUP:
         required: true
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
         with:
           inlineScript: |
             # Pulls from JFrog Registry
-            IMAGE_URL="${{ secrets.CONTAINER_REGISTRY }}/map-bench:${{ inputs.version_tag }}"
+            IMAGE_URL="${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ inputs.version_tag }}"
             
             az containerapp update \
               --name "${{ inputs.container_app_name }}" \
