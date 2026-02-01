@@ -1,0 +1,94 @@
+{
+  "$schema": "https://maplibre.org/maplibre-style-spec/",
+  "version": 8,
+  "name": "Flight Tracking Layers - MapBox Implementation",
+  "metadata": {
+    "description": "Exact Mapbox style configuration matching MapBox.jsx implementation",
+    "source-file": "src/maps/MapBox.jsx",
+    "data-source": "opensky-network.geojson (via FlightTracker)",
+    "compatible-engines": ["mapbox-gl-js", "maplibre-gl"],
+    "images": {
+      "note": "Images must be loaded via JavaScript before layers are added",
+      "aircraft-icon": {
+        "source": "/sprites/airplane-fr24.svg",
+        "width": 64,
+        "height": 64,
+        "sdf": false,
+        "load-method": "map.loadImage() -> map.addImage('aircraft-icon', data, {sdf: false})"
+      }
+    },
+    "interaction": {
+      "note": "Hover interactions are handled via JavaScript event listeners, not in the style spec",
+      "events": {
+        "mouseenter-flight-icons": {
+          "cursor": "pointer",
+          "tooltip": {
+            "template": [
+              "<strong>{{callsign}}</strong>",
+              "גובה: {{altitudeFeet}} ft",
+              "מהירות: {{velocityKnots}} קשר",
+              "כיוון: {{heading}}°"
+            ]
+          }
+        },
+        "mouseleave-flight-icons": {
+          "cursor": "default",
+          "tooltip": "hide"
+        }
+      }
+    }
+  },
+  "sources": {
+    "flight_data": {
+      "type": "geojson",
+      "data": {
+        "type": "FeatureCollection",
+        "features": []
+      },
+      "attribution": "OpenSky Network"
+    },
+    "flight_paths_data": {
+      "type": "geojson",
+      "data": {
+        "type": "FeatureCollection",
+        "features": []
+      },
+      "attribution": "OpenSky Network"
+    }
+  },
+  "layers": [
+    {
+      "id": "flight-paths-layer",
+      "type": "line",
+      "source": "flight-data",
+      "filter": ["==", "$type", "LineString"],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round",
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": "#ffffff",
+        "line-width": 1.5,
+        "line-dasharray": [2, 2]
+      }
+    },
+    {
+      "id": "flight-icons",
+      "type": "symbol",
+      "source": "flight-data",
+      "filter": ["==", "$type", "Point"],
+      "layout": {
+        "icon-image": "http:sprites/airplane-fr24.svg",
+        "icon-size": 0.4,
+        "icon-rotate": ["get", "heading"],
+        "icon-rotation-alignment": "map",
+        "icon-pitch-alignment": "map",
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": true,
+        "symbol-z-elevate": true,
+        "visibility": "visible"
+      }
+    }
+  ]
+}

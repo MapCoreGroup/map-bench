@@ -38,7 +38,7 @@ export class SViewportData {
 
 // Non-state global variables
 var lastAction = {};                    // Used to store the last command sent.
-var overlayManager: MapCore.IMcOverlayManager = null;              // MapCore's overlay manager
+export var overlayManager: MapCore.IMcOverlayManager = null;              // MapCore's overlay manager
 var overlay: MapCore.IMcOverlay = null;                     // Overlay on which objects are drawn
 export var editMode: MapCore.IMcEditMode = null;                    // Currently active edit mode
 var _device: MapCore.IMcMapDevice = null;                     // MapCore's interface to GPU
@@ -598,7 +598,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
             overlay = MapCore.IMcOverlay.Create(overlayManager);
             overlay.SetDrawPriority(100);
         }
-
+      
         document.getElementById('Canvases')!.style.transform = 'none';
 
 
@@ -1651,8 +1651,9 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
             }
             
             let currLayer = MapCore.IMcRaw3DModelMapLayer.Create(
-                    remoteUrl!, getTerrainCrs(), false, 
+                    remoteUrl!, getTerrainCrs(), MapCore.EMcVerticalDatumType.EVDT_DEFAULT, 
                     null, 0.0, layerCallback!, layerRequestParams);
+            currLayer.SetDisplayingItemsAttachedToTerrain(true);
             activeLayers.push(currLayer);
         }
         else
@@ -2629,6 +2630,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
         init.eViewportAntiAliasingLevel = MapCore.IMcMapDevice.EAntiAliasingLevel.EAAL_4;
         init.eTerrainObjectsAntiAliasingLevel = MapCore.IMcMapDevice.EAntiAliasingLevel.EAAL_4;
         (MapCore as any).__UseCesiumNative = false;
+        (MapCore as any).__Styling3DPointLeaderLine = false;
         _device = MapCore.IMcMapDevice.Create(init);
         _device.AddRef();
 
@@ -3339,7 +3341,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
     // Close currently display maps
     ///////////////////////////////////////////////////////////////
 
-    const doCloseMap = () => {
+    const doCloseMap = () => {//this function not in use
         // Do not continue if no viewport exists
         let terrain = null;
         if (viewport2D == null && viewport3D == null) {
@@ -3444,7 +3446,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
         }
     }
 
-    const handleCloseAction = () => {
+    const handleCloseAction = () => {//this function is in use
         isCameraTrack = false;
         FirstCameraTrack = true;
         doCloseMap();
@@ -3499,7 +3501,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
                         }
                     }
                     handleOpenTerrainMode(action.mode, terrain);
-                }
+                   }
                 else if (action.action === 'ADD_LAYER') {
                     if (aViewports.length > 0)
                     {
@@ -3516,7 +3518,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
                         terrain.Release();
                     }
                 }
-                else if (action.action === 'REMOVE_LAYER') {
+                else if (action.action === 'REMOVE_LAYER') {//this function is in use
                     if (aViewports.length > 0)
                     {
                         let idx: number = terrainLayers.indexOf(action.layerId);
@@ -3547,7 +3549,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
                     defaultCenterPoint = action.Value as MapCore.SMcVector3D;
                 }
                 // Handle map close
-                else if (action.action === 'CLOSE_MAP') {
+                else if (action.action === 'CLOSE_MAP') {//this function is in use
                     handleCloseAction();
                 }
                 // Handle toggle DTM visualization
