@@ -8,28 +8,38 @@ ENV npm_config_registry=https://mapcore.jfrog.io/artifactory/api/npm/npm-virtual
 COPY package.json ./
 COPY .npmrc ./
 
-# This line mirrors the SR 'RUN --mount' command exactly
-# It reads the secret provided by the GitHub Action
+# Keep JFROG_TOKEN as a secret mount because it is a credential for npm install
+# This is secure and correct.
 RUN --mount=type=secret,id=jfrog_token \
     JFROG_TOKEN=$(cat /run/secrets/jfrog_token) npm install
 
 COPY . .
 
-# DEEP CHECK VERSION:
-# 1. Mount the secret to a temporary default path (/run/secrets/env_file)
-# 2. Copy it manually to .env so we can inspect it
-# 3. Verify it has content
-# 4. Build
-RUN --mount=type=secret,id=env_file \
-    cp /run/secrets/env_file .env && \
-    echo "--- 🔍 DEBUG: Verifying .env file ---" && \
-    ls -la .env && \
-    if grep -q "VITE_" .env; then echo "✅ FOUND VITE_ VARIABLES"; else echo "❌ ERROR: NO VITE_ VARIABLES FOUND"; exit 1; fi && \
-    npm run build
+# --- NEW SECTION: CLEAN ARGUMENTS ---
+# We declare the arguments we expect from GitHub Actions
+ARG VITE_MAPBOX_TOKEN
+ARG VITE_GOOGLE_API_KEY
+ARG VITE_CESIUM_TOKEN
+ARG VITE_MAPTILER_KEY
+ARG VITE_MAPCORE_SERVER_URL
+ARG VITE_GOOGLE_3D_TILES_URL
+ARG VITE_WAYBACK_MAPTILES_WMTS_URL
+ARG VITE_WMTS_LAYERS_LIST
+ARG VITE_WMTS_TILING_SCHEME
 
-# Build Vite application using the .env secret mount
-# RUN --mount=type=secret,id=env_file,target=/app/.env \
-#     npm run build
+# We set them as Environment Variables so Vite can "bake" them into the app
+ENV VITE_MAPBOX_TOKEN=$VITE_MAPBOX_TOKEN
+ENV VITE_GOOGLE_API_KEY=$VITE_GOOGLE_API_KEY
+ENV VITE_CESIUM_TOKEN=$VITE_CESIUM_TOKEN
+ENV VITE_MAPTILER_KEY=$VITE_MAPTILER_KEY
+ENV VITE_MAPCORE_SERVER_URL=$VITE_MAPCORE_SERVER_URL
+ENV VITE_GOOGLE_3D_TILES_URL=$VITE_GOOGLE_3D_TILES_URL
+ENV VITE_WAYBACK_MAPTILES_WMTS_URL=$VITE_WAYBACK_MAPTILES_WMTS_URL
+ENV VITE_WMTS_LAYERS_LIST=$VITE_WMTS_LAYERS_LIST
+ENV VITE_WMTS_TILING_SCHEME=$VITE_WMTS_TILING_SCHEME
+
+# Now build the app. Vite will automatically pick up the ENV vars above.
+RUN npm run build
 
 # Stage 2: Serve
 FROM nginx:alpine
