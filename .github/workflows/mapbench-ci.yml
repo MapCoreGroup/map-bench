@@ -90,7 +90,7 @@ jobs:
             ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:latest
           secrets: |
                 jfrog_token=${{ secrets.JFROG_TOKEN }}
-                env_file=${{ github.workspace }}/build.env
+                "env_file=src=build.env"
 
   deploy-app:
     needs: build-and-tag
