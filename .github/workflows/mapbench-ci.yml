@@ -85,10 +85,12 @@ jobs:
         with:
           context: .
           push: true
-          # Now we point to the file we just created
+          tags: |
+            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ steps.bump_version.outputs.new_tag }}
+            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:latest
           secrets: |
-            jfrog_token=${{ secrets.JFROG_TOKEN }}
-            "env_file=build.env"
+                jfrog_token=${{ secrets.JFROG_TOKEN }}
+                "env_file=build.env"
 
   deploy-app:
     needs: build-and-tag
