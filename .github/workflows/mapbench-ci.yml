@@ -51,6 +51,17 @@ jobs:
           username: ${{ secrets.JFROG_USER }}
           password: ${{ secrets.JFROG_TOKEN }}
 
+      - name: Debug Secret Existence
+        run: |
+          if [ -z "${{ secrets.ENV_FILE_CONTENT }}" ]; then
+            echo "::error:: The secret ENV_FILE_CONTENT is EMPTY or MISSING!"
+            exit 1
+          else
+            echo "✅ Secret detected. Length: ${#SECRET_VAR} characters."
+          fi
+        env:
+          SECRET_VAR: ${{ secrets.ENV_FILE_CONTENT }}
+
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
