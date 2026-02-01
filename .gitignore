@@ -24,6 +24,12 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+# types
+src/types/MapCore.d.ts
+
+# Scripts
+build mapcore
+
 # Certification
 certs/**/*.crt
 certs/**/*.key
