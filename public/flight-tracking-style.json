@@ -39,7 +39,7 @@
     }
   },
   "sources": {
-    "flight_data": {
+    "flight-data": {
       "type": "geojson",
       "data": {
         "type": "FeatureCollection",
@@ -47,7 +47,7 @@
       },
       "attribution": "OpenSky Network"
     },
-    "flight_paths_data": {
+    "flight-paths-data": {
       "type": "geojson",
       "data": {
         "type": "FeatureCollection",
