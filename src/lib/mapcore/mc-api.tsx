@@ -1651,8 +1651,9 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
             }
             
             let currLayer = MapCore.IMcRaw3DModelMapLayer.Create(
-                    remoteUrl!, getTerrainCrs(), false, 
+                    remoteUrl!, getTerrainCrs(), MapCore.EMcVerticalDatumType.EVDT_DEFAULT, 
                     null, 0.0, layerCallback!, layerRequestParams);
+            currLayer.SetDisplayingItemsAttachedToTerrain(true);
             activeLayers.push(currLayer);
         }
         else
@@ -2629,6 +2630,7 @@ const MapCoreViewer = ({ action, cursorPos, crsUnits, availableGroups,
         init.eViewportAntiAliasingLevel = MapCore.IMcMapDevice.EAntiAliasingLevel.EAAL_4;
         init.eTerrainObjectsAntiAliasingLevel = MapCore.IMcMapDevice.EAntiAliasingLevel.EAAL_4;
         (MapCore as any).__UseCesiumNative = false;
+        (MapCore as any).__Styling3DPointLeaderLine = false;
         _device = MapCore.IMcMapDevice.Create(init);
         _device.AddRef();
 

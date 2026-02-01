@@ -569,7 +569,9 @@ declare namespace MapCore {
                 aLayers : IMcMapLayer.SServerLayerInfo[], astrServiceMetadataURLs : string[],
                 strServiceProviderName: string) : void;
             On3DModelSmartRealityDataResults(sStatus : IMcErrors.ECode, strServerURL : string, uObjectID : SMcVariantID,
-                buildingHistory : IMcMapLayer.SSmartRealityBuildingHistory[]) : void;
+                aBuildingHistory : IMcMapLayer.SSmartRealityBuildingHistory[]) : void;
+            On3DModelSmartRealityBuildingDataResults(sStatus : IMcErrors.ECode, strServerURL : string, uObjectID : SMcVariantID,
+                aBuildingProperties : IMcObject.SKeyVariantValue[]) : void;
 
         }
         namespace IAsyncOperationCallback {
@@ -832,7 +834,7 @@ declare namespace MapCore {
          * @param pParams                   pParams.Value :                 IMcMapLayer.SRawParams
          * @param pbImageCoordinateSystem   pbImageCoordinateSystem.Value : boolean
          */
-        GetCreateParams(pParams : any, pbImageCoordinateSystem : any) ;
+        GetCreateParams(pParams : any, pbImageCoordinateSystem : any) : void;
         GetComponents() : IMcMapLayer.SComponentParams[];
         AddComponents(aComponents : IMcMapLayer.SComponentParams[]) : void;
          /**
@@ -1006,7 +1008,7 @@ declare namespace MapCore {
     interface IMcRaw3DModelMapLayer extends IMc3DModelMapLayer { 
         /**
          * @param pstrRawDataDirectory          pstrRawDataDirectory.Value :        string
-         * @param pbOrthometricHeights          pbOrthometricHeights.Value :        number
+         * @param peSourceVerticalDatumType     peSourceVerticalDatumType.Value :   EMcVerticalDatumType
          * @param puNumLevelsToIgnore           puNumLevelsToIgnore.Value :         number
          * @param ppTargetCoordinateSystem      ppTargetCoordinateSystem.Value :    IMcGridCoordinateSystem
          * @param ppClipRect                    ppClipRect.Value :                  SMcBox
@@ -1017,7 +1019,7 @@ declare namespace MapCore {
          * @param pPositionOffset               pPositionOffset.Value :  SMcVector3D
          */
         GetCreateParams(
-            pstrRawDataDirectory : any, pbOrthometricHeights : any, puNumLevelsToIgnore : any,
+            pstrRawDataDirectory : any, peSourceVerticalDatumType : any, puNumLevelsToIgnore : any,
             ppTargetCoordinateSystem : any, ppClipRect : any,
             pfTargetHighestResolution : any,
             pstrIndexingDataDirectory : any, pbNonDefaultIndexingDataDirectory : any, paRequestParams : SMcKeyStringValue[], pPositionOffset? : any) : void;
@@ -1027,9 +1029,9 @@ declare namespace MapCore {
         DeleteIndexingData(strRawDataDirectory : string, strIndexingDataDirectory? : string) : void;
     }
      namespace IMcRaw3DModelMapLayer {
-         function Create(strRawDataDirectory : string, bOrthometricHeights? : boolean, uNumLevelsToIgnore? : number, pReadCallback? : IMcMapLayer.IReadCallback,
+         function Create(strRawDataDirectory : string, eSourceVerticalDatumType? : EMcVerticalDatumType, uNumLevelsToIgnore? : number, pReadCallback? : IMcMapLayer.IReadCallback,
              strIndexingDataDirectory? : string): IMcRaw3DModelMapLayer;
-         function Create(strRawDataDirectory : string, pTargetCoordinateSystem : IMcGridCoordinateSystem, bOrthometricHeights?: boolean, pClipRect? : SMcBox,
+         function Create(strRawDataDirectory : string, pTargetCoordinateSystem : IMcGridCoordinateSystem, eSourceVerticalDatumType?: EMcVerticalDatumType, pClipRect? : SMcBox,
              fTargetHighestResolution? : number, pReadCallback? : IMcMapLayer.IReadCallback, aRequestParams? : SMcKeyStringValue[], 
              PositionOffset? : SMcVector3D): IMcRaw3DModelMapLayer;
         var LAYER_TYPE : number;
@@ -1309,17 +1311,23 @@ declare namespace MapCore {
         UnRegisterLocalMap(pLocalMap : IMcMapViewport) : void;
         SetActiveLocalMap(pLocalMap : IMcMapViewport) : void;
         GetActiveLocalMap() : IMcMapViewport;
-        SetLocalMapFootprintItem(pInactiveLine : IMcLineItem, pActiveLine : IMcLineItem, pLocalMap? : IMcMapViewport) : void;
+        SetLocalMapFootprintItem(pInactiveLine : IMcLineItem, pActiveLine : IMcLineItem, pInactiveCameraPosIcon? : IMcPictureItem, pActiveCameraPosIcon? : IMcPictureItem, 
+			pInactiveLookAtTargetIcon? : IMcPictureItem, pActiveLookAtTargetIcon? : IMcPictureItem, pLocalMap? : IMcMapViewport) : void;
         /**
-         * @param pInactiveLine       pInactiveLine.Value :   IMcLineItem
-         * @param pActiveLine         pActiveLine.Value :     IMcLineItem
+         * @param ppInactiveLine                ppInactiveLine.Value :              IMcLineItem
+         * @param ppActiveLine                  ppActiveLine.Value :                IMcLineItem
+         * @param ppInactiveCameraPosIcon       ppInactiveCameraPosIcon.Value :     IMcPictureItem
+         * @param ppActiveCameraPosIcon         ppActiveCameraPosIcon.Value :       IMcPictureItem
+         * @param ppInactiveLookAtTargetIcon    ppInactiveLookAtTargetIcon.Value :  IMcPictureItem
+         * @param ppActiveLookAtTargetIcon      ppActiveLookAtTargetIcon.Value :    IMcPictureItem
          */
-        GetLocalMapFootprintItem(pInactiveLine: any, pActiveLine: any, pLocalMap?: IMcMapViewport): void;
+        GetLocalMapFootprintItem(pInactiveLine : any, ppActiveLine : any, ppInactiveCameraPosIcon? : any, ppActiveCameraPosIcon? : any, 
+			ppInactiveLookAtTargetIcon? : any, ppActiveLookAtTargetIcon? : any, ppLocalMap? : IMcMapViewport) : void;
         /**
          * @param paPolygonPoints   array created by the user, allocated and filled by MapCore
          * @param paArrowPoints     array created by the user, allocated and filled by MapCore
          */
-        GetLocalMapFootprintScreenPositions(pLocalMap: IMcMapViewport, paPolygonPoints: SMcVector2D[], paArrowPoints?: SMcVector2D[]): void;
+        GetLocalMapFootprintScreenPositions(pLocalMap : IMcMapViewport, paPolygonPoints : SMcVector2D[], paArrowPoints? : SMcVector2D[]) : void;
         /**
          * @param pbRenderNeeded    pbRenderNeeded.Value :   boolean
          * @param peCursorType      peCursorType.Value :     IMcGlobalMap.ECursorType
@@ -1403,7 +1411,7 @@ declare namespace MapCore {
         /**
          * @param pCamera        pCamera.Value :     IMcMapCamera
          */
-        function CreateHeatMap(pCamera, CreateData : IMcMapViewport.SCreateData,
+        function CreateHeatMap(pCamera : any, CreateData : IMcMapViewport.SCreateData,
 		apTerrains : IMcMapTerrain[], bCalcAveragePerPoint : boolean, bShowHeatMapPicture : boolean) : IMcHeatMapViewport;
 
         class SHeatMapPoint {
@@ -1673,7 +1681,8 @@ declare namespace MapCore {
             EGV_WEBKIT
         }
         enum ESmartRealityQuery {
-            ESRQ_BUILDING_HISTORY
+            ESRQ_BUILDING_HISTORY,
+            ESRQ_BUILDING_DATA_BY_ID
         }
         class SInitParams {
             constructor();
@@ -3713,7 +3722,7 @@ namespace IMcPathFinder {
              */
             SaveObjectsAsRawVectorData(apObjects : IMcObject[], pMapViewport : IMcMapViewport, fCameraYawAngle : number, fCameraScale : number, strLayerName : string, strFileName : string, pauFileMemoryBuffer : any, paAdditionalFiles : SMcFileInMemory[], pAsyncCallback? : IMcOverlayManager.IAsyncOperationCallback, eGeometryFilter? : EGeometry) : void;
             CancelAsyncSavingObjects(pAsyncCallback : IMcOverlayManager.IAsyncOperationCallback) : void;
-            LoadObjectsFromRawVectorData(Params : IMcRawVectorMapLayer.SParams, bClearObjectSchemesCache? : boolean)  : IMcObject[];
+            LoadObjectsFromRawVectorData(Params : IMcRawVectorMapLayer.SParams, pAsyncCallback? : IMcOverlayManager.IAsyncOperationCallback, bClearObjectSchemesCache? : boolean)  : IMcObject[];
             GetObjectByID(uObjectID : number) : IMcObject;
 	        GetObjects() : IMcObject[];
              /**
@@ -3939,6 +3948,8 @@ namespace IMcPathFinder {
             OnSaveObjectsAsRawVectorToFileResult(strFileName : string, eStatus : IMcErrors.ECode, aAdditionalFiles : string[]) : void;
             /** Optional */
             OnSaveObjectsAsRawVectorToBufferResult(strFileName : string, eStatus : IMcErrors.ECode, auFileMemoryBuffer : Uint8Array, aAdditionalFiles : SMcFileInMemory[]) : void;
+            /** Optional */
+            OnLoadObjectsFromRawVectorDataResult(strDataSource : string, eStatus : IMcErrors.ECode, apLoadedObjects : IMcObject[]) : void;
         }
         namespace IAsyncOperationCallback {
             function extend(strName : string, Class : any) : IAsyncOperationCallback;
@@ -5530,7 +5541,7 @@ namespace IMcPathFinder {
          * @param pUnseenPolygons       pUnseenPolygons.Value : SPolygonsOfSight
          * @param paSeenStaticObjects   array created by the user, allocated and filled by MapCore
          */
-        GetPolygonAreaOfSight(Scouter : SMcVector3D, bIsScouterHeightAbsolute : boolean, aTargetPolygonPoints,
+        GetPolygonAreaOfSight(Scouter : SMcVector3D, bIsScouterHeightAbsolute : boolean, aTargetPolygonPoints : SMcVector3D,
             dTargetHeight : number, bTargetsHeightAbsolute : boolean, fTargetResolutionInMeters : number,
             dRotationAngle : number, uNumRaysPer360Degrees : number, aVisibilityColors : SMcBColor[],
             ppAreaOfSight? : any, paLinesOfSight? : IMcSpatialQueries.SLineOfSightPoint[][], pSeenPolygons? :any, pUnseenPolygons? : any,
@@ -6121,7 +6132,7 @@ namespace IMcPathFinder {
             /** Optional */
             NewVertex(pObject : IMcObject, pItem : IMcObjectSchemeItem, WorldVertex : SMcVector3D, ScreenVertex : SMcVector3D, uVertexIndex : number, dAngle : number) : void;
             /** Optional */
-            PointDeleted(pObject : IMcObject, pItem : IMcObjectSchemeItem,WorldVertex : SMcVector3D, ScreenVertex : SMcVector3D, uVertexIndex : number) 
+            PointDeleted(pObject : IMcObject, pItem : IMcObjectSchemeItem,WorldVertex : SMcVector3D, ScreenVertex : SMcVector3D, uVertexIndex : number) : void;
             /** Optional */
             PointNewPos(pObject : IMcObject, pItem : IMcObjectSchemeItem, WorldVertex : SMcVector3D, ScreenVertex : SMcVector3D, uVertexIndex : number, dAngle : number, bDownOnHeadPoint : boolean) : void; 
             /** Optional */
@@ -6357,6 +6368,12 @@ enum PL_PL_STATUS {
         PointGeometry,
         PolygonGeometry,
         UnSupportedGeometry,
+    }
+
+    enum EMcVerticalDatumType {
+        EVDT_DEFAULT,
+        EVDT_GEOID,
+        EVDT_ELLIPSOID
     }
 
     var MC_EMPTY_ID : number;
