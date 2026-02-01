@@ -62,17 +62,33 @@ jobs:
         env:
           SECRET_VAR: ${{ secrets.ENV_FILE_CONTENT }}
 
+      # - name: Build and Push
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: |
+      #       ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ steps.bump_version.outputs.new_tag }}
+      #       ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:latest
+      #     secrets: |
+      #       env_file=${{ secrets.ENV_FILE_CONTENT }}
+      #       jfrog_token=${{ secrets.JFROG_TOKEN }}
+
+      # STEP 1: Create the physical file safely
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_FILE_CONTENT }}" > build.env
+
+      # STEP 2: Pass the file path (not the content) to Docker
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: |
-            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ steps.bump_version.outputs.new_tag }}
-            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:latest
+          # Now we point to the file we just created
           secrets: |
-            env_file=${{ secrets.ENV_FILE_CONTENT }}
             jfrog_token=${{ secrets.JFROG_TOKEN }}
+            "env_file=build.env"
 
   deploy-app:
     needs: build-and-tag
