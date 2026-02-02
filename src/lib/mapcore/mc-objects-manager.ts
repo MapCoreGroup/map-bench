@@ -56,7 +56,9 @@ export const McObjectsManagerService = {
                 if (layer.layout['icon-image']) {
                     layer.layout['icon-image'] = layer.layout['icon-image'].map((item: any) => {
                         if (typeof item === 'string' && item.startsWith('icon-')) {
+                            console.log('currentDomain', currentDomain);
                             const iconUrl = new URL(`/sprites/${item.replace('icon-', '')}.svg`, currentDomain).href;
+                            console.log('iconUrl', iconUrl);
                             return iconUrl;
                         }
                         return item;
