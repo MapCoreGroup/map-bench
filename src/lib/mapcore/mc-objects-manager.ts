@@ -49,13 +49,15 @@ export const McObjectsManagerService = {
         this[overlayKey].LoadObjectsFromRawVectorData(sParams, asyncOperationCallBack);
     },
     transformToMapcoreStyleJson(styleJson: any): string {
+        const currentDomain = window.location.origin;
         styleJson.layers = styleJson.layers.map((layer: any) => {
             if (layer.layout) {
                 layer.layout.visibility = layer.layout.visibility === 'none' ? 'visible' : layer.layout.visibility;
                 if (layer.layout['icon-image']) {
                     layer.layout['icon-image'] = layer.layout['icon-image'].map((item: any) => {
                         if (typeof item === 'string' && item.startsWith('icon-')) {
-                            return `http:sprites/${item.replace('icon-', '')}.svg`;
+                            const iconUrl = new URL(`/sprites/${item.replace('icon-', '')}.svg`, currentDomain).href;
+                            return iconUrl;
                         }
                         return item;
                     });
