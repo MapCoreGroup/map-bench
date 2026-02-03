@@ -93,9 +93,6 @@ transformToMapcoreStyleJson(styleJson: any): string {
     return JSON.stringify(styleJson); 
 }
 
-        const processedStyleString = JSON.stringify(styleJson, null, 2);
-        return processedStyleString;
-    },
     //create overlays
     async createPowerLinesOverlay(visible: boolean) {
         await this._setupBaseOverlay('powerLinesOverlay', visible, 'power-lines', loadPowerLines);
