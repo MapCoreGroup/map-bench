@@ -91,7 +91,7 @@ export const McObjectsManagerService = {
         console.log('--- END: transformToMapcoreStyleJson ---');
         // Ensure you return the correct format (string or object) based on your function signature
         return JSON.stringify(styleJson); 
-    }
+    },
 
     //create overlays
     async createPowerLinesOverlay(visible: boolean) {
