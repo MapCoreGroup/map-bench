@@ -49,20 +49,23 @@ export const McObjectsManagerService = {
         this[overlayKey].LoadObjectsFromRawVectorData(sParams, asyncOperationCallBack);
     },
     transformToMapcoreStyleJson(styleJson: any): string {
-        const currentDomain = window.location.origin;
         styleJson.layers = styleJson.layers.map((layer: any) => {
             if (layer.layout) {
                 layer.layout.visibility = layer.layout.visibility === 'none' ? 'visible' : layer.layout.visibility;
-                if (layer.layout['icon-image']) {
-                    layer.layout['icon-image'] = layer.layout['icon-image'].map((item: any) => {
-                        if (typeof item === 'string' && item.startsWith('icon-')) {
-                            console.log('currentDomain', currentDomain);
-                            const iconUrl = new URL(`/sprites/${item.replace('icon-', '')}.svg`, currentDomain).href;
-                            console.log('iconUrl', iconUrl);
-                            return iconUrl;
-                        }
-                        return item;
-                    });
+                const iconImageValue = layer.layout['icon-image'];
+                if (iconImageValue) {
+                    if (typeof iconImageValue === 'string') {//necessary for production environment
+                        layer.layout['icon-image'] = iconImageValue.replace('http:', `${window.location.origin}/`);
+                    }
+                    else {
+                        layer.layout['icon-image'] = iconImageValue.map((item: any) => {
+                            if (typeof item === 'string' && item.startsWith('icon-')) {
+                                const iconUrl = new URL(`/sprites/${item.replace('icon-', '')}.svg`, window.location.origin).href;
+                                return iconUrl;
+                            }
+                            return item;
+                        });
+                    }
                 }
             }
             return layer;
@@ -87,9 +90,10 @@ export const McObjectsManagerService = {
         MapCore.IMcMapDevice.CreateFileSystemDirectory('/flights-data');
         //fetch map-style for flights and create file system file
         const flightsStyleResponse = await fetch('/flight-tracking-style.json');
-        const flightsStyleBuffer = await flightsStyleResponse.arrayBuffer();
-        const flightsStyleUint8Array = new Uint8Array(flightsStyleBuffer);
-        MapCore.IMcMapDevice.CreateFileSystemFile('/flights-data/flight-tracking-style.json', flightsStyleUint8Array);
+        const flightsStyleBuffer = await flightsStyleResponse.json();
+        const formattedFlightsStyleJson = this.transformToMapcoreStyleJson(flightsStyleBuffer);
+        const uint8Array = new TextEncoder().encode(formattedFlightsStyleJson);
+        MapCore.IMcMapDevice.CreateFileSystemFile('/flights-data/flight-tracking-style.json', uint8Array);
     },
 
     updateFlightsObjects(flightData: any, pathsData: any) {
