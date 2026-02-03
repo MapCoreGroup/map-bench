@@ -47,48 +47,25 @@ export const McObjectsManagerService = {
         this[overlayKey].LoadObjectsFromRawVectorData(sParams, asyncOperationCallBack);
     },
 
-    // BULLETPROOF TRANSFORMER: Handles Arrays, Strings, and cleans broken URLs
-transformToMapcoreStyleJson(styleJson: any): string {
-        console.log('--- START: transformToMapcoreStyleJson ---');
-    
+    transformToMapcoreStyleJson(styleJson: any): string {
         styleJson.layers = styleJson.layers.map((layer: any) => {
             if (layer.layout && layer.layout['icon-image']) {
                 const iconData = layer.layout['icon-image'];
-
-                const fixIconString = (item: any) => {
+                const fix = (item: any) => {
                     if (typeof item !== 'string') return item;
-                    
-                    // בודק אם המחרוזת פגומה או דורשת עדכון
                     if (item.startsWith('icon-') || item.includes('airplane') || item.startsWith('http:')) {
-                        
-                        // ניקוי יסודי של כל קידומת זבל כדי להישאר רק עם שם הקובץ
-                        let fileName = item
-                            .replace('icon-', '')
-                            .replace('http:sprites/', '') 
-                            .replace('.svg', '');
-                        
-                        // בניית כתובת מלאה ותקינה (Absolute URL)
-                        const absoluteUrl = `${window.location.origin}/sprites/${fileName}.svg`;
-                        
-                        return absoluteUrl;
+                        const fileName = item.replace('icon-', '').replace('http:sprites/', '').replace('.svg', '');
+                        return `${window.location.origin}/sprites/${fileName}.svg`;
                     }
                     return item;
                 };
-
-                if (Array.isArray(iconData)) {
-                    layer.layout['icon-image'] = iconData.map(fixIconString);
-                } 
-                else if (typeof iconData === 'string') {
-                    layer.layout['icon-image'] = fixIconString(iconData);
-                }
+                layer.layout['icon-image'] = Array.isArray(iconData) ? iconData.map(fix) : fix(iconData);
             }
-
             if (layer.layout) {
                 layer.layout.visibility = layer.layout.visibility === 'none' ? 'visible' : layer.layout.visibility;
             }
             return layer;
         });
-    
         return JSON.stringify(styleJson); 
     },
     
@@ -101,24 +78,17 @@ transformToMapcoreStyleJson(styleJson: any): string {
     },
 
     async createFlightsOverlay(flightsVisible: boolean) {
-        console.log('--- START: createFlightsOverlay ---');
         this.flightsOverlay = MapCore.IMcOverlay.Create(overlayManager);
         const visibleOption = flightsVisible ? MapCore.IMcConditionalSelector.EActionOptions.EAO_FORCE_TRUE : MapCore.IMcConditionalSelector.EActionOptions.EAO_FORCE_FALSE;
         this.flightsOverlay.SetVisibilityOption(visibleOption);
-
+    
         MapCore.IMcMapDevice.CreateFileSystemDirectory('/flights-data');
-
-        // FIXED: Fetch as JSON, Transform, then Save
-        console.log('[DEBUG] Fetching flight-tracking-style.json');
-        const flightsStyleResponse = await fetch('/flight-tracking-style.json');
-        const flightsStyleJson = await flightsStyleResponse.json();
+    
+        const res = await fetch('/flight-tracking-style.json');
+        const json = await res.json();
+        const transformed = this.transformToMapcoreStyleJson(json);
         
-        // Pass the flight JSON through the transformer
-        const transformedStyleString = this.transformToMapcoreStyleJson(flightsStyleJson);
-        
-        const flightsStyleUint8Array = new TextEncoder().encode(transformedStyleString);
-        MapCore.IMcMapDevice.CreateFileSystemFile('/flights-data/flight-tracking-style.json', flightsStyleUint8Array);
-        console.log('[DEBUG] Flight tracking style saved to virtual FS.');
+        MapCore.IMcMapDevice.CreateFileSystemFile('/flights-data/flight-tracking-style.json', new TextEncoder().encode(transformed));
     },
 
     updateFlightsObjects(flightData: any, pathsData: any) {
