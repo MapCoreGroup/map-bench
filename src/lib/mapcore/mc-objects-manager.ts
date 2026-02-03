@@ -48,7 +48,7 @@ export const McObjectsManagerService = {
     },
 
     // BULLETPROOF TRANSFORMER: Handles Arrays, Strings, and cleans broken URLs
-    transformToMapcoreStyleJson(styleJson: any): string {
+transformToMapcoreStyleJson(styleJson: any): string {
         console.log('--- START: transformToMapcoreStyleJson ---');
     
         styleJson.layers = styleJson.layers.map((layer: any) => {
@@ -58,46 +58,40 @@ export const McObjectsManagerService = {
                 const fixIconString = (item: any) => {
                     if (typeof item !== 'string') return item;
                     
-                    // Match if it has icon- prefix, airplane keyword, or the broken http: prefix
+                    // בודק אם המחרוזת פגומה או דורשת עדכון
                     if (item.startsWith('icon-') || item.includes('airplane') || item.startsWith('http:')) {
-                        console.log(`   [DEBUG] FOUND MATCH TO FIX: ${item}`);
                         
-                        // Strip prefixes to get clean filename (e.g., "airplane-fr24")
+                        // ניקוי יסודי של כל קידומת זבל כדי להישאר רק עם שם הקובץ
                         let fileName = item
                             .replace('icon-', '')
-                            .replace('http:sprites/', '') // Strips the "poison"
+                            .replace('http:sprites/', '') 
                             .replace('.svg', '');
                         
-                        const cleanUrl = `/sprites/${fileName}.svg`;
-                        console.log(`   --> REPLACED WITH: ${cleanUrl}`);
-                        return cleanUrl;
+                        // בניית כתובת מלאה ותקינה (Absolute URL)
+                        const absoluteUrl = `${window.location.origin}/sprites/${fileName}.svg`;
+                        
+                        return absoluteUrl;
                     }
                     return item;
                 };
 
-                // CASE 1: Icon is an Array (e.g., Match expressions)
                 if (Array.isArray(iconData)) {
-                    console.log(`[DEBUG] Transforming Array icons for layer: ${layer.id}`);
                     layer.layout['icon-image'] = iconData.map(fixIconString);
                 } 
-                // CASE 2: Icon is a simple String (e.g., Flight airplane)
                 else if (typeof iconData === 'string') {
-                    console.log(`[DEBUG] Transforming String icon for layer: ${layer.id}`);
                     layer.layout['icon-image'] = fixIconString(iconData);
                 }
             }
 
-            // Ensure layer visibility is handled
             if (layer.layout) {
                 layer.layout.visibility = layer.layout.visibility === 'none' ? 'visible' : layer.layout.visibility;
             }
             return layer;
         });
     
-        console.log('--- END: transformToMapcoreStyleJson ---');
         return JSON.stringify(styleJson); 
     },
-
+    
     async createPowerLinesOverlay(visible: boolean) {
         await this._setupBaseOverlay('powerLinesOverlay', visible, 'power-lines', loadPowerLines);
     },
