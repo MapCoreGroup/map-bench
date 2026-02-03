@@ -2,7 +2,7 @@ name: Map Bench CI/CD
 
 on:
   push:
-    branches: [ Feature/containerization ]
+    branches: [ Feature/containerization, fix_sprites ]
 
 jobs:
   build-and-tag:
