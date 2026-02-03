@@ -48,50 +48,50 @@ export const McObjectsManagerService = {
 
         this[overlayKey].LoadObjectsFromRawVectorData(sParams, asyncOperationCallBack);
     },
-transformToMapcoreStyleJson(styleJson: any): string {
-    console.log('--- START: transformToMapcoreStyleJson ---');
-
-    styleJson.layers = styleJson.layers.map((layer: any) => {
-        
-        // 1. Check if layer has layout
-        if (layer.layout) {
+    transformToMapcoreStyleJson(styleJson: any): string {
+        console.log('--- START: transformToMapcoreStyleJson ---');
+    
+        styleJson.layers = styleJson.layers.map((layer: any) => {
             
-            // Fix visibility (existing logic)
-            layer.layout.visibility = layer.layout.visibility === 'none' ? 'visible' : layer.layout.visibility;
-
-            // 2. Check if it has an icon-image
-            if (layer.layout['icon-image']) {
-                console.log(`[DEBUG] Found layer with icon: ${layer.id}`, layer.layout['icon-image']);
-
-                // SAFETY CHECK: Ensure it is an array before mapping
-                if (Array.isArray(layer.layout['icon-image'])) {
-                    
-                    layer.layout['icon-image'] = layer.layout['icon-image'].map((item: any) => {
-                        console.log(`   [DEBUG] Checking item:`, item);
-
-                        if (typeof item === 'string' && item.startsWith('icon-')) {
-                            console.log(`   --> FOUND MATCH: ${item}`);
-                            
-                            // The "Bulletproof" Fix (No variables)
-                            const iconUrl = `/sprites/${item.replace('icon-', '')}.svg`;
-                            
-                            console.log(`   --> REPLACED WITH: ${iconUrl}`);
-                            return iconUrl;
-                        }
-                        return item;
-                    });
-                } else {
-                    console.log(`[DEBUG] Layer ${layer.id} icon-image is NOT an array (it is a string/expression). Skipping map.`);
+            // 1. Check if layer has layout
+            if (layer.layout) {
+                
+                // Fix visibility (existing logic)
+                layer.layout.visibility = layer.layout.visibility === 'none' ? 'visible' : layer.layout.visibility;
+    
+                // 2. Check if it has an icon-image
+                if (layer.layout['icon-image']) {
+                    console.log(`[DEBUG] Found layer with icon: ${layer.id}`, layer.layout['icon-image']);
+    
+                    // SAFETY CHECK: Ensure it is an array before mapping
+                    if (Array.isArray(layer.layout['icon-image'])) {
+                        
+                        layer.layout['icon-image'] = layer.layout['icon-image'].map((item: any) => {
+                            console.log(`   [DEBUG] Checking item:`, item);
+    
+                            if (typeof item === 'string' && item.startsWith('icon-')) {
+                                console.log(`   --> FOUND MATCH: ${item}`);
+                                
+                                // The "Bulletproof" Fix (No variables)
+                                const iconUrl = `/sprites/${item.replace('icon-', '')}.svg`;
+                                
+                                console.log(`   --> REPLACED WITH: ${iconUrl}`);
+                                return iconUrl;
+                            }
+                            return item;
+                        });
+                    } else {
+                        console.log(`[DEBUG] Layer ${layer.id} icon-image is NOT an array (it is a string/expression). Skipping map.`);
+                    }
                 }
             }
-        }
-        return layer;
-    });
-
-    console.log('--- END: transformToMapcoreStyleJson ---');
-    // Ensure you return the correct format (string or object) based on your function signature
-    return JSON.stringify(styleJson); 
-}
+            return layer;
+        });
+    
+        console.log('--- END: transformToMapcoreStyleJson ---');
+        // Ensure you return the correct format (string or object) based on your function signature
+        return JSON.stringify(styleJson); 
+    }
 
     //create overlays
     async createPowerLinesOverlay(visible: boolean) {
