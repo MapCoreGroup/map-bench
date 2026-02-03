@@ -90,8 +90,8 @@ export const McObjectsManagerService = {
         MapCore.IMcMapDevice.CreateFileSystemDirectory('/flights-data');
         //fetch map-style for flights and create file system file
         const flightsStyleResponse = await fetch('/flight-tracking-style.json');
-        const flightsStyleBuffer = await flightsStyleResponse.json();
-        const formattedFlightsStyleJson = this.transformToMapcoreStyleJson(flightsStyleBuffer);
+        const flightsStyleJson = await flightsStyleResponse.json();
+        const formattedFlightsStyleJson = this.transformToMapcoreStyleJson(flightsStyleJson);
         const uint8Array = new TextEncoder().encode(formattedFlightsStyleJson);
         MapCore.IMcMapDevice.CreateFileSystemFile('/flights-data/flight-tracking-style.json', uint8Array);
     },
