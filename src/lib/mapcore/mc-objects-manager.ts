@@ -14,28 +14,26 @@ export const McObjectsManagerService = {
     updateIndex: 0n,
     updateCallbackIndex: 0n,
 
-    // Generic setup for base overlays
+    // Generic setup for base overlays (Religious Buildings, Power Lines)
     async _setupBaseOverlay(overlayKey: 'powerLinesOverlay' | 'religiousBuildingsOverlay', isVisible: boolean, fileName: string, dataLoader: () => Promise<any>,) {
-        // Create overlay and set visibility
         this[overlayKey] = MapCore.IMcOverlay.Create(overlayManager);
         this.setOverlayVisibility(this[overlayKey], isVisible);
 
         console.log(`Lazy loading ${fileName}...`);
         MapCore.IMcMapDevice.CreateFileSystemDirectory(`/${fileName}-data`);
 
-        // loading geojson data
         const data = await dataLoader();
         const dataUint8 = new TextEncoder().encode(JSON.stringify(data));
         MapCore.IMcMapDevice.CreateFileSystemFile(`/${fileName}-data/${fileName}.geojson`, dataUint8);
 
-        // loading style file
         const styleRes = await fetch('/map-style.json');
         const styleJson = await styleRes.json();
+        
+        // Transform the style
         const styleString = this.transformToMapcoreStyleJson(styleJson);
         const uint8Array = new TextEncoder().encode(styleString);
         MapCore.IMcMapDevice.CreateFileSystemFile(`/${fileName}-data/map-style-mapcore.json`, uint8Array);
 
-        // setting up raw vector params
         const sParams = new MapCore.IMcRawVectorMapLayer.SParams(`/${fileName}-data/${fileName}.geojson`, null);
         sParams.StylingParams = new MapCore.IMcRawVectorMapLayer.SInternalStylingParams();
         sParams.StylingParams.strStylingFile = `/${fileName}-data/map-style-mapcore.json`;
@@ -49,35 +47,49 @@ export const McObjectsManagerService = {
         this[overlayKey].LoadObjectsFromRawVectorData(sParams, asyncOperationCallBack);
     },
 
+    // BULLETPROOF TRANSFORMER: Handles Arrays, Strings, and cleans broken URLs
     transformToMapcoreStyleJson(styleJson: any): string {
         console.log('--- START: transformToMapcoreStyleJson ---');
     
         styleJson.layers = styleJson.layers.map((layer: any) => {
+            if (layer.layout && layer.layout['icon-image']) {
+                const iconData = layer.layout['icon-image'];
+
+                const fixIconString = (item: any) => {
+                    if (typeof item !== 'string') return item;
+                    
+                    // Match if it has icon- prefix, airplane keyword, or the broken http: prefix
+                    if (item.startsWith('icon-') || item.includes('airplane') || item.startsWith('http:')) {
+                        console.log(`   [DEBUG] FOUND MATCH TO FIX: ${item}`);
+                        
+                        // Strip prefixes to get clean filename (e.g., "airplane-fr24")
+                        let fileName = item
+                            .replace('icon-', '')
+                            .replace('http:sprites/', '') // Strips the "poison"
+                            .replace('.svg', '');
+                        
+                        const cleanUrl = `/sprites/${fileName}.svg`;
+                        console.log(`   --> REPLACED WITH: ${cleanUrl}`);
+                        return cleanUrl;
+                    }
+                    return item;
+                };
+
+                // CASE 1: Icon is an Array (e.g., Match expressions)
+                if (Array.isArray(iconData)) {
+                    console.log(`[DEBUG] Transforming Array icons for layer: ${layer.id}`);
+                    layer.layout['icon-image'] = iconData.map(fixIconString);
+                } 
+                // CASE 2: Icon is a simple String (e.g., Flight airplane)
+                else if (typeof iconData === 'string') {
+                    console.log(`[DEBUG] Transforming String icon for layer: ${layer.id}`);
+                    layer.layout['icon-image'] = fixIconString(iconData);
+                }
+            }
+
+            // Ensure layer visibility is handled
             if (layer.layout) {
                 layer.layout.visibility = layer.layout.visibility === 'none' ? 'visible' : layer.layout.visibility;
-    
-                if (layer.layout['icon-image']) {
-                    console.log(`[DEBUG] Found layer with icon: ${layer.id}`, layer.layout['icon-image']);
-    
-                    if (Array.isArray(layer.layout['icon-image'])) {
-                        layer.layout['icon-image'] = layer.layout['icon-image'].map((item: any) => {
-                            
-                            // Broadened logic to catch "icon-" OR "airplane"
-                            if (typeof item === 'string' && (item.startsWith('icon-') || item.includes('airplane'))) {
-                                console.log(`   --> FOUND MATCH: ${item}`);
-                                
-                                const cleanName = item.replace('icon-', '');
-                                const iconUrl = `/sprites/${cleanName}.svg`;
-                                
-                                console.log(`   --> REPLACED WITH: ${iconUrl}`);
-                                return iconUrl;
-                            }
-                            return item;
-                        });
-                    } else {
-                        console.log(`[DEBUG] Layer ${layer.id} icon-image is NOT an array. Skipping.`);
-                    }
-                }
             }
             return layer;
         });
@@ -86,7 +98,6 @@ export const McObjectsManagerService = {
         return JSON.stringify(styleJson); 
     },
 
-    //create overlays
     async createPowerLinesOverlay(visible: boolean) {
         await this._setupBaseOverlay('powerLinesOverlay', visible, 'power-lines', loadPowerLines);
     },
@@ -103,12 +114,12 @@ export const McObjectsManagerService = {
 
         MapCore.IMcMapDevice.CreateFileSystemDirectory('/flights-data');
 
-        // FIX: Fetch JSON and TRANSFORM before saving to virtual file system
+        // FIXED: Fetch as JSON, Transform, then Save
         console.log('[DEBUG] Fetching flight-tracking-style.json');
         const flightsStyleResponse = await fetch('/flight-tracking-style.json');
         const flightsStyleJson = await flightsStyleResponse.json();
         
-        // Pass it through the fixer
+        // Pass the flight JSON through the transformer
         const transformedStyleString = this.transformToMapcoreStyleJson(flightsStyleJson);
         
         const flightsStyleUint8Array = new TextEncoder().encode(transformedStyleString);
@@ -133,6 +144,7 @@ export const McObjectsManagerService = {
             const jsonData = JSON.stringify(data);
             MapCore.IMcMapDevice.CreateFileSystemFile(path, jsonData);
             
+            // Reuse the transformed style from the virtual FS
             const styleContent = MapCore.IMcMapDevice.GetFileSystemFileContents('/flights-data/flight-tracking-style.json');
             MapCore.IMcMapDevice.CreateFileSystemFile(`/flights-data-${this.updateIndex}/flight-tracking-style.json`, styleContent);
             
@@ -170,7 +182,6 @@ export const McObjectsManagerService = {
 
     setOverlayVisibility(localOverlay: MapCore.IMcOverlay, isVisible: boolean) {
         if (!localOverlay) return;
-
         const visibilityOption = isVisible ? MapCore.IMcConditionalSelector.EActionOptions.EAO_FORCE_TRUE : MapCore.IMcConditionalSelector.EActionOptions.EAO_FORCE_FALSE;
         localOverlay.SetVisibilityOption(visibilityOption);
     },
