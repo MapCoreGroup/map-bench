@@ -1,0 +1,93 @@
+name: Map Bench CI/CD
+
+# on:
+#   push:
+#     branches: [ Feature/containerization ]
+
+on:
+  workflow_dispatch:
+    # inputs:
+    #   tag_name:
+    #     description: 'Version Tag (e.g., v1.0.4)'
+    #     required: true
+    #     type: string
+
+jobs:
+  build-and-tag:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.bump_version.outputs.new_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump Version
+        id: bump_version
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+          IFS='.' read -r -a parts <<< "$LATEST_TAG"
+          major="${parts[0]}"; minor="${parts[1]}"; patch="${parts[2]}"
+          while : ; do
+            patch=$((patch + 1))
+            CANDIDATE_TAG="$major.$minor.$patch"
+            if git rev-parse "$CANDIDATE_TAG" >/dev/null 2>&1 || git ls-remote --exit-code --tags origin "$CANDIDATE_TAG" >/dev/null 2>&1; then
+              continue
+            else
+              NEW_TAG="$CANDIDATE_TAG"
+              break
+            fi
+          done
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to JFrog
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CONTAINER_REGISTRY }}
+          username: ${{ secrets.JFROG_USER }}
+          password: ${{ secrets.JFROG_TOKEN }}
+
+      # CLEAN BUILD STEP: No file creation, just direct mapping
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ steps.bump_version.outputs.new_tag }}
+            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:latest
+          
+          # 1. Credentials go in 'secrets' (kept separate for security)
+          secrets: |
+            jfrog_token=${{ secrets.JFROG_TOKEN }}
+            
+          # 2. Config variables go in 'build-args'
+          build-args: |
+            VITE_MAPBOX_TOKEN=${{ secrets.VITE_MAPBOX_TOKEN }}
+            VITE_GOOGLE_API_KEY=${{ secrets.VITE_GOOGLE_API_KEY }}
+            VITE_CESIUM_TOKEN=${{ secrets.VITE_CESIUM_TOKEN }}
+            VITE_MAPTILER_KEY=${{ secrets.VITE_MAPTILER_KEY }}
+            VITE_MAPCORE_SERVER_URL=${{ secrets.VITE_MAPCORE_SERVER_URL }}
+            VITE_GOOGLE_3D_TILES_URL=${{ secrets.VITE_GOOGLE_3D_TILES_URL }}
+            VITE_WAYBACK_MAPTILES_WMTS_URL=${{ secrets.VITE_WAYBACK_MAPTILES_WMTS_URL }}
+            VITE_WMTS_LAYERS_LIST=${{ secrets.VITE_WMTS_LAYERS_LIST }}
+            VITE_WMTS_TILING_SCHEME=${{ secrets.VITE_WMTS_TILING_SCHEME }}
+
+  deploy-app:
+    needs: build-and-tag
+    uses: ./.github/workflows/deploy-logic.yml
+    with:
+      environment_name: 'Production'
+      version_tag: ${{ needs.build-and-tag.outputs.new_tag }}
+      container_app_name: 'map-bench-app'
+    secrets:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      CONTAINER_REGISTRY: ${{ secrets.CONTAINER_REGISTRY }}
+      AZURE_MC_RESOURCE_GROUP: ${{ secrets.AZURE_MC_RESOURCE_GROUP }}
+      AZURE_SUBSCRIPTION_ID : ${{ secrets.AZURE_SUBSCRIPTION_ID }}
