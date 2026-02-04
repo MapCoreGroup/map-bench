@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Version Tag (e.g., v1.0.4)'
+        description: 'Version Tag (e.g., 1.0.5)' # Static hint only
         required: true
         type: string
 
@@ -12,32 +12,32 @@ jobs:
   build-and-tag:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Map the step output to the job output so 'deploy-app' can read it
     outputs:
-      new_tag: ${{ steps.bump_version.outputs.new_tag }}
+      new_tag: ${{ steps.set_tag.outputs.final_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Bump Version
-        id: bump_version
+      # REPLACED: "Bump Version" script is gone.
+      # ADDED: Logic to set the input as the tag, push it, and export it.
+      - name: Create and Push Tag
+        id: set_tag
         run: |
-          git fetch --tags
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
-          IFS='.' read -r -a parts <<< "$LATEST_TAG"
-          major="${parts[0]}"; minor="${parts[1]}"; patch="${parts[2]}"
-          while : ; do
-            patch=$((patch + 1))
-            CANDIDATE_TAG="$major.$minor.$patch"
-            if git rev-parse "$CANDIDATE_TAG" >/dev/null 2>&1 || git ls-remote --exit-code --tags origin "$CANDIDATE_TAG" >/dev/null 2>&1; then
-              continue
-            else
-              NEW_TAG="$CANDIDATE_TAG"
-              break
-            fi
-          done
-          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          INPUT_TAG="${{ inputs.tag_name }}"
+          
+          # 1. Create the tag locally
+          git tag $INPUT_TAG
+          
+          # 2. Push the tag to the repo
+          git push origin $INPUT_TAG
+          
+          # 3. Output the tag so the next steps and jobs can use it
+          echo "final_tag=$INPUT_TAG" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -49,21 +49,19 @@ jobs:
           username: ${{ secrets.JFROG_USER }}
           password: ${{ secrets.JFROG_TOKEN }}
 
-      # CLEAN BUILD STEP: No file creation, just direct mapping
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
+          # UPDATED: Uses the tag we just defined in the step above
           tags: |
-            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ steps.bump_version.outputs.new_tag }}
+            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ steps.set_tag.outputs.final_tag }}
             ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:latest
           
-          # 1. Credentials go in 'secrets' (kept separate for security)
           secrets: |
             jfrog_token=${{ secrets.JFROG_TOKEN }}
             
-          # 2. Config variables go in 'build-args'
           build-args: |
             VITE_MAPBOX_TOKEN=${{ secrets.VITE_MAPBOX_TOKEN }}
             VITE_GOOGLE_API_KEY=${{ secrets.VITE_GOOGLE_API_KEY }}
@@ -80,6 +78,7 @@ jobs:
     uses: ./.github/workflows/deploy-logic.yml
     with:
       environment_name: 'Production'
+      # UPDATED: This now correctly grabs the manual input from the job above
       version_tag: ${{ needs.build-and-tag.outputs.new_tag }}
       container_app_name: 'map-bench-app'
     secrets:
