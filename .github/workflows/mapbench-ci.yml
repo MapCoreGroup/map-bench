@@ -5,7 +5,7 @@ name: Map Bench CI/CD
 #     branches: [ Feature/containerization ]
 
 on:
-  workflow_dispatch:
+  # workflow_dispatch:
     # inputs:
     #   tag_name:
     #     description: 'Version Tag (e.g., v1.0.4)'
