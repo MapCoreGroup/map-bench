@@ -10,7 +10,6 @@ on:
 
 jobs:
   build-and-tag:
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # Map the step output to the job output so 'deploy-app' can read it
     outputs:
