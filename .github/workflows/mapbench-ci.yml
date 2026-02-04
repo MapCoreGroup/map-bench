@@ -11,6 +11,8 @@ on:
 jobs:
   build-and-tag:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     # Map the step output to the job output so 'deploy-app' can read it
     outputs:
       new_tag: ${{ steps.set_tag.outputs.final_tag }}
