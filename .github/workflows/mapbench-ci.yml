@@ -1,11 +1,20 @@
 name: Map Bench CI/CD
 
+# on:
+#   push:
+#     branches: [ Feature/containerization ]
+
 on:
-  push:
-    branches: [ Feature/containerization ]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Version Tag (e.g., v1.0.4)'
+        required: true
+        type: string
 
 jobs:
   build-and-tag:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
       new_tag: ${{ steps.bump_version.outputs.new_tag }}
