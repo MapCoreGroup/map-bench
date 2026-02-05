@@ -28,8 +28,8 @@ jobs:
         id: set_tag
         run: |
           # Ensure this workflow is only triggered from the main branch
-          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            echo "Error: This workflow can only be triggered from the main branch." >&2
+          if [ "${{ github.ref }}" != "refs/heads/${{ github.event.repository.default_branch }}" ]; then
+            echo "Error: This workflow can only be triggered from the default branch (${{ github.event.repository.default_branch }})." >&2
             echo "Current branch: ${{ github.ref }}" >&2
             exit 1
           fi
