@@ -56,7 +56,15 @@ jobs:
           git tag "$INPUT_TAG"
           
           # 2. Push the tag to the repo
-          git push origin "$INPUT_TAG"
+          if ! git push origin "$INPUT_TAG"; then
+            echo "Warning: Initial push of tag '$INPUT_TAG' failed. Checking for possible concurrent creation..." >&2
+            if git ls-remote --tags origin "$INPUT_TAG" | grep -q "refs/tags/$INPUT_TAG$"; then
+              echo "Error: Tag '$INPUT_TAG' now exists on remote 'origin'. It was likely created concurrently by another process." >&2
+            else
+              echo "Error: Failed to push tag '$INPUT_TAG' to remote 'origin' for an unknown reason." >&2
+            fi
+            exit 1
+          fi
           
           # 3. Output the tag so the next steps and jobs can use it
           echo "final_tag=$INPUT_TAG" >> $GITHUB_OUTPUT
