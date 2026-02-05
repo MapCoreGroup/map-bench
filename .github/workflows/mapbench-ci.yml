@@ -26,11 +26,14 @@ jobs:
       # ADDED: Logic to set the input as the tag, push it, and export it.
       - name: Create and Push Tag
         id: set_tag
+        env:
+          CURRENT_BRANCH: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           # Ensure this workflow is only triggered from the default branch
-          if [ "${{ github.ref_name }}" != "${{ github.event.repository.default_branch }}" ]; then
-            echo "Error: This workflow can only be triggered from the default branch (${{ github.event.repository.default_branch }})." >&2
-            echo "Current branch: ${{ github.ref_name }}" >&2
+          if [ "$CURRENT_BRANCH" != "$DEFAULT_BRANCH" ]; then
+            echo "Error: This workflow can only be triggered from the default branch ($DEFAULT_BRANCH)." >&2
+            echo "Current branch: $CURRENT_BRANCH" >&2
             exit 1
           fi
 
