@@ -27,6 +27,13 @@ jobs:
       - name: Create and Push Tag
         id: set_tag
         run: |
+          # Ensure this workflow is only triggered from the main branch
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "Error: This workflow can only be triggered from the main branch." >&2
+            echo "Current branch: ${{ github.ref }}" >&2
+            exit 1
+          fi
+          
           INPUT_TAG="${{ inputs.tag_name }}"
           
           # Validate that the tag only contains safe characters for a Git tag
