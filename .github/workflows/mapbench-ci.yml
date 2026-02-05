@@ -48,6 +48,10 @@ jobs:
             exit 1
           fi
           
+          # Configure Git user identity for tagging
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
           # 1. Create the tag locally
           git tag "$INPUT_TAG"
           
