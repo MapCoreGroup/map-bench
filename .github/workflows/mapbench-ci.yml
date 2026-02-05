@@ -52,8 +52,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # 1. Create the tag locally
-          git tag "$INPUT_TAG"
+          # 1. Create the tag locally as an annotated tag for better traceability
+          git tag -a "$INPUT_TAG" -m "Release $INPUT_TAG"
           
           # 2. Push the tag to the repo
           if ! git push origin "$INPUT_TAG"; then
