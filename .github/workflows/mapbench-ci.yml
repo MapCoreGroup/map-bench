@@ -36,6 +36,18 @@ jobs:
             exit 1
           fi
           
+          # Check if the tag already exists locally
+          if git rev-parse -q --verify "refs/tags/$INPUT_TAG" >/dev/null; then
+            echo "Error: Tag '$INPUT_TAG' already exists locally. Please choose a different tag name." >&2
+            exit 1
+          fi
+          
+          # Check if the tag already exists on the remote
+          if git ls-remote --tags origin "$INPUT_TAG" | grep -q "refs/tags/$INPUT_TAG$"; then
+            echo "Error: Tag '$INPUT_TAG' already exists on the remote 'origin'. Please choose a different tag name." >&2
+            exit 1
+          fi
+          
           # 1. Create the tag locally
           git tag "$INPUT_TAG"
           
