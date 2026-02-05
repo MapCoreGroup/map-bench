@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Version Tag (e.g., 1.0.5)' # Static hint only
+        description: 'Version Tag (e.g., 1.0.5 or v1.0.5)' # Static hint only
         required: true
         type: string
 
