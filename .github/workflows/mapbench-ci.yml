@@ -15,7 +15,7 @@ jobs:
       contents: write
     # Map the step output to the job output so 'deploy-app' can read it
     outputs:
-      new_tag: ${{ steps.set_tag.outputs.final_tag }}
+      new_tag: ${{ steps.set_tag.outputs.new_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -67,7 +67,7 @@ jobs:
           fi
           
           # 3. Output the tag so the next steps and jobs can use it
-          echo "final_tag=$INPUT_TAG" >> $GITHUB_OUTPUT
+          echo "new_tag=$INPUT_TAG" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -86,7 +86,7 @@ jobs:
           push: true
           # UPDATED: Uses the tag we just defined in the step above
           tags: |
-            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ steps.set_tag.outputs.final_tag }}
+            ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:${{ steps.set_tag.outputs.new_tag }}
             ${{ secrets.CONTAINER_REGISTRY }}/mapcore-docker/map-bench:latest
           
           secrets: |
