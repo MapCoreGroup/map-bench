@@ -29,11 +29,18 @@ jobs:
         run: |
           INPUT_TAG="${{ inputs.tag_name }}"
           
+          # Validate that the tag only contains safe characters for a Git tag
+          # Allowed: letters, digits, dot, underscore, hyphen
+          if ! printf '%s\n' "$INPUT_TAG" | grep -Eq '^[A-Za-z0-9._-]+$'; then
+            echo "Error: Invalid tag name '$INPUT_TAG'. Allowed characters are: A-Z, a-z, 0-9, '.', '_', '-'." >&2
+            exit 1
+          fi
+          
           # 1. Create the tag locally
-          git tag $INPUT_TAG
+          git tag "$INPUT_TAG"
           
           # 2. Push the tag to the repo
-          git push origin $INPUT_TAG
+          git push origin "$INPUT_TAG"
           
           # 3. Output the tag so the next steps and jobs can use it
           echo "final_tag=$INPUT_TAG" >> $GITHUB_OUTPUT
