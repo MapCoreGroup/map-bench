@@ -26,9 +26,19 @@ jobs:
       # ADDED: Logic to set the input as the tag, push it, and export it.
       - name: Create and Push Tag
         id: set_tag
+        env:
+          CURRENT_BRANCH: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
+          # Ensure this workflow is only triggered from the default branch
+          if [ "$CURRENT_BRANCH" != "$DEFAULT_BRANCH" ]; then
+            echo "Error: This workflow can only be triggered from the default branch ($DEFAULT_BRANCH)." >&2
+            echo "Current branch: $CURRENT_BRANCH" >&2
+            exit 1
+          fi
+
           INPUT_TAG="${{ inputs.tag_name }}"
-          
+
           # Validate that the tag only contains safe characters for a Git tag
           # Allowed: letters, digits, dot, underscore, hyphen
           if ! printf '%s\n' "$INPUT_TAG" | grep -Eq '^[A-Za-z0-9._-]+$'; then
